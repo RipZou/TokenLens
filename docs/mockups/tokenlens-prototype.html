@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokenLens — Prototype</title>
+<style>
+  :root{
+    --bg:#F6F7F9; --card:#FFFFFF; --line:#E3E6EA; --line2:#F0F1F3;
+    --ink:#16181D; --ink2:#3A3F48; --muted:#5F6571;
+    --blue:#3B5BDB; --blue-d:#2B44A8; --blue-bg:#EEF1FD;
+    --warn:#B35C00; --warn-bg:#FFF4E6; --warn-line:#FFC078;
+    --ok:#1B6E3A; --ok-dot:#2F9E44; --ok-bg:#F1F8F3;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+  a{color:var(--blue)} a:hover{color:var(--blue-d)}
+  button{font:inherit;cursor:pointer}
+  button:disabled{cursor:not-allowed;opacity:.5}
+  .mono{font-family:var(--mono)}
+  .muted{color:var(--muted)}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+  h1{font-size:24px;margin:0} h2{font-size:16px;margin:0}
+  .btn{min-height:40px;padding:8px 14px;border-radius:8px;border:1px solid #D3D7DD;background:#fff;color:var(--ink2)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .btn.danger{color:#A61E1E;border-color:#F1B5B5}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .kpi-label{font-size:13px;color:var(--muted)}
+  .kpi-val{font-size:28px;font-weight:700;margin-top:6px}
+  .kpi-sub{font-size:13px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--muted);font-weight:500;padding:10px 8px;border-bottom:1px solid var(--line)}
+  td{padding:10px 8px;border-bottom:1px solid var(--line2)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .bar-track{height:10px;border-radius:5px;background:#EEF0F3;overflow:hidden}
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .hidden{display:none !important}
+  .note{font-size:13px;padding:10px 12px;border-radius:8px;background:#F3F4F6;color:var(--ink2)}
+  @keyframes flash{from{background:#DDF2E3}to{background:transparent}}
+  tr.fresh td{animation:flash 2.5s ease-out}
+  .toast{position:fixed;right:24px;bottom:24px;max-width:360px;padding:14px 16px;border-radius:12px;background:#16181D;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:14px;z-index:20}
+  input,select{font:inherit;min-height:40px;padding:8px 10px;border:1px solid #D3D7DD;border-radius:8px;background:#fff}
+  label{font-size:13px;color:var(--ink2)}
+  nav button{border:0;background:transparent;padding:10px 12px;border-radius:8px;color:#4A505B}
+  nav button[aria-current="page"]{background:var(--blue-bg);color:var(--blue-d);font-weight:600}
+  @media (max-width:720px){.wrap{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <form id="loginForm" class="card" style="width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="#3B5BDB" stroke-width="3"/><line x1="18" y1="18" x2="25" y2="25" stroke="#16181D" stroke-width="3" stroke-linecap="round"/></svg>
+      <span style="font-weight:700;font-size:20px">TokenLens</span>
+    </div>
+    <p class="muted" style="margin:0">See where your agent’s tokens go.</p>
+    <label for="email">Email</label>
+    <input id="email" type="email" required value="admin@acme.dev" autocomplete="email">
+    <label for="pw">Password</label>
+    <input id="pw" type="password" required value="password" autocomplete="current-password">
+    <button class="btn primary" type="submit">Sign in</button>
+    <p class="muted" style="margin:0;font-size:12px">Prototype: any email and password work. No account? <a href="#" onclick="return false">Create one</a></p>
+  </form>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="app" class="hidden">
+  <header style="background:#fff;border-bottom:1px solid var(--line)">
+    <div class="wrap" style="padding-top:12px;padding-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:20px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="26" height="26" viewBox="0 0 28 28" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="#3B5BDB" stroke-width="3"/><line x1="18" y1="18" x2="25" y2="25" stroke="#16181D" stroke-width="3" stroke-linecap="round"/></svg>
+        <span style="font-weight:700;font-size:18px">TokenLens</span>
+      </div>
+      <nav aria-label="Main" style="display:flex;flex-wrap:wrap;gap:4px">
+        <button data-view="dashboard">Dashboard</button>
+        <button data-view="detail">Call detail</button>
+        <button data-view="budgets">Budgets</button>
+        <button data-view="keys">API keys</button>
+      </nav>
+      <div style="margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+        <label style="display:flex;align-items:center;gap:8px">Project
+          <select id="project"><option>support-agent</option><option>research-agent</option></select>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px">Role (demo)
+          <select id="role"><option>Admin</option><option>Developer</option><option>Viewer</option></select>
+        </label>
+        <button id="liveBtn" class="btn" aria-pressed="true" style="display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:600">
+          <span id="liveDot" style="width:8px;height:8px;border-radius:50%;background:var(--ok-dot)"></span><span id="liveTxt">Live</span>
+        </button>
+        <button id="logout" class="btn">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" style="padding-top:24px;padding-bottom:48px">
+
+    <!-- Budget alert banner -->
+    <div id="banner" class="hidden" role="status" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;background:var(--warn-bg);border:1px solid var(--warn-line);margin-bottom:20px">
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#B35C00" stroke-width="2"><path d="M12 3l10 18H2z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="17.5" r=".6"/></svg>
+      <span id="bannerTxt"></span>
+      <button class="btn" style="margin-left:auto" data-goto="budgets">Review budget</button>
+      <button id="bannerX" class="btn" aria-label="Dismiss alert">×</button>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="v-dashboard" style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:12px">
+        <h1>Today · <span class="projName">support-agent</span></h1>
+        <span class="muted" style="font-size:13px">Sample data · a new call is simulated every 5 s</span>
+        <button id="simBtn" class="btn" style="margin-left:auto">Simulate one call now</button>
+      </div>
+
+      <div class="grid4">
+        <div class="card"><div class="kpi-label">Input tokens</div><div class="kpi-val" id="kIn"></div><div class="kpi-sub" id="kCalls"></div></div>
+        <div class="card"><div class="kpi-label">Output tokens</div><div class="kpi-val" id="kOut"></div><div class="kpi-sub">text · tool_use · thinking</div></div>
+        <div class="card"><div class="kpi-label">Cost today</div><div class="kpi-val" id="kCost"></div><div class="kpi-sub">Daily budget $25.00</div></div>
+        <div class="card"><div class="kpi-label">Monthly budget used</div><div class="kpi-val" id="kBud"></div>
+          <div class="bar-track" style="height:8px;margin-top:10px"><div id="kBudBar" style="height:8px"></div></div></div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <div class="card" style="flex:999 1 560px;min-width:0">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+            <h2>Input tokens by category, last 7 days</h2>
+            <div role="group" aria-label="Time range" id="ranges" style="margin-left:auto;display:flex;gap:4px"></div>
+          </div>
+          <div id="chart" role="img" aria-label="Daily input tokens stacked by category" style="display:flex;align-items:flex-end;gap:18px;height:230px;margin-top:20px;border-bottom:1px solid #D3D7DD"></div>
+          <div id="chartX" style="display:flex;gap:18px;margin-top:8px"></div>
+          <ul id="legend" style="list-style:none;padding:0;margin:16px 0 0;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px"></ul>
+        </div>
+        <div class="card" style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:12px">
+          <h2>Where today’s input went</h2>
+          <div id="split" style="display:flex;flex-direction:column;gap:10px"></div>
+          <div id="hint" style="padding:12px 14px;border-radius:10px;background:var(--blue-bg);font-size:13px;color:#1F2A5C"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+          <h2>Recent calls</h2>
+          <span class="muted" style="font-size:12px">New calls appear at the top without refresh · click a row for its breakdown</span>
+        </div>
+        <div style="overflow-x:auto;margin-top:12px">
+          <table style="min-width:780px">
+            <thead><tr><th>Time</th><th>Agent</th><th>Model</th><th class="num">Input</th><th class="num">Output</th><th>Largest category</th><th class="num">Cost</th></tr></thead>
+            <tbody id="callRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CALL DETAIL ===== -->
+    <section id="v-detail" class="hidden" style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+        <button class="btn" data-goto="dashboard">← Back to dashboard</button>
+        <h1 id="dTitle"></h1>
+        <span id="dEst" class="pill hidden" style="background:#FFF4E6;color:var(--warn)">estimated</span>
+      </div>
+      <div class="grid4">
+        <div class="card"><div class="kpi-label">Input tokens</div><div class="kpi-val" id="dIn"></div><div class="kpi-sub" id="dModel"></div></div>
+        <div class="card"><div class="kpi-label">Output tokens</div><div class="kpi-val" id="dOut"></div><div class="kpi-sub" id="dOutSplit"></div></div>
+        <div class="card"><div class="kpi-label">Cache read</div><div class="kpi-val" id="dCache"></div><div class="kpi-sub">Not part of category split</div></div>
+        <div class="card"><div class="kpi-label">Cost</div><div class="kpi-val" id="dCost"></div><div class="kpi-sub">Sample prices: $3 / $15 per MTok</div></div>
+      </div>
+      <div class="card">
+        <h2>Input breakdown</h2>
+        <div id="dBar" role="img" aria-label="Input tokens split by category" style="display:flex;height:28px;border-radius:8px;overflow:hidden;margin-top:14px"></div>
+        <div style="overflow-x:auto;margin-top:16px">
+          <table style="min-width:560px">
+            <thead><tr><th>Category</th><th class="num">Tokens</th><th class="num">Share</th><th class="num">Cost</th></tr></thead>
+            <tbody id="dRows"></tbody>
+          </table>
+        </div>
+        <p class="note" style="margin:14px 0 0">Categories always sum to the API’s <span class="mono">input_tokens</span>. The gap between per-segment counts and the real total is shown as <span class="mono">overhead</span>; if it exceeds 5%, segments are scaled and the call is marked <em>estimated</em>.</p>
+      </div>
+      <div class="card" id="dHints"></div>
+    </section>
+
+    <!-- ===== BUDGETS ===== -->
+    <section id="v-budgets" class="hidden" style="display:flex;flex-direction:column;gap:20px">
+      <h1>Budgets &amp; alerts</h1>
+      <p id="budRoleNote" class="note hidden" style="margin:0">You can view budgets. Only Admins can change them.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <div class="card" style="flex:1 1 420px;min-width:0">
+          <h2>Monthly budget · Acme AI</h2>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-top:12px">
+            <span id="bUsed" style="font-size:28px;font-weight:700"></span><span class="muted" id="bOf"></span>
+          </div>
+          <div class="bar-track" style="height:14px;margin-top:12px;position:relative">
+            <div id="bBar" style="height:14px"></div>
+          </div>
+          <div style="position:relative;height:18px;font-size:12px" class="muted">
+            <span style="position:absolute;left:80%;transform:translateX(-50%)">80%</span>
+            <span style="position:absolute;right:0">100%</span>
+          </div>
+          <form id="budForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px;align-items:end">
+            <div style="display:flex;flex-direction:column;gap:6px"><label for="bPeriod">Period</label><select id="bPeriod"><option>Monthly</option><option>Daily</option></select></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><label for="bLimit">Limit (USD)</label><input id="bLimit" type="number" min="1" step="1" value="500"></div>
+            <fieldset style="border:0;padding:0;margin:0;display:flex;gap:14px;align-items:center;min-height:40px">
+              <legend class="muted" style="font-size:13px;padding:0">Alert at</legend>
+              <label><input type="checkbox" checked style="min-height:auto"> 80%</label>
+              <label><input type="checkbox" checked style="min-height:auto"> 100%</label>
+            </fieldset>
+            <button class="btn primary" type="submit">Save budget</button>
+          </form>
+        </div>
+        <div class="card" style="flex:1 1 360px;min-width:0">
+          <h2>Alert history</h2>
+          <table style="margin-top:8px"><thead><tr><th>When</th><th>Level</th><th>Detail</th></tr></thead><tbody id="alertRows"></tbody></table>
+          <p id="noAlerts" class="muted" style="font-size:13px">No alerts yet this month. Leave the dashboard running — the 80% alert fires within about 30 seconds.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== API KEYS ===== -->
+    <section id="v-keys" class="hidden" style="display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+        <h1>API keys · <span class="projName">support-agent</span></h1>
+        <button id="newKey" class="btn primary" style="margin-left:auto">Create key</button>
+      </div>
+      <p id="keyRoleNote" class="note hidden" style="margin:0">Viewers can’t create or revoke keys.</p>
+      <div id="newKeyBox" class="card hidden" style="border-color:var(--warn-line);background:var(--warn-bg)">
+        <h2>Copy your new key now</h2>
+        <p style="margin:8px 0">This is the only time the full key is shown. We store only its hash.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <code id="newKeyVal" class="mono" style="padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:8px"></code>
+          <button id="copyKey" class="btn">Copy</button>
+          <button id="doneKey" class="btn">I’ve saved it</button>
+        </div>
+      </div>
+      <div class="card">
+        <table><thead><tr><th>Name</th><th>Key</th><th>Created</th><th>Status</th><th></th></tr></thead><tbody id="keyRows"></tbody></table>
+        <p class="muted" style="font-size:13px;margin:12px 0 0">Agents send the key as <span class="mono">Authorization: Bearer tl_live_…</span> to <span class="mono">POST /api/v1/events</span>.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast hidden" role="alert"></div>
+
+<script>
+/* ---------- sample data ---------- */
+const CATS = [
+  { key:'system',           color:'#4C6EF5', base:9  },
+  { key:'tool_definitions', color:'#F08C00', base:42 },
+  { key:'history',          color:'#7048E8', base:22 },
+  { key:'tool_results',     color:'#0CA678', base:12 },
+  { key:'retrieval',        color:'#D6336C', base:9  },
+  { key:'user_input',       color:'#1864AB', base:3  },
+  { key:'attachments',      color:'#868E96', base:1  },
+  { key:'overhead',         color:'#CED4DA', base:2  },
+];
+const PRICE_IN = 3e-6, PRICE_OUT = 15e-6;
+const DAYS = [['Oct 22',3.9],['Oct 23',4.2],['Oct 24',3.6],['Oct 25',4.4],['Oct 26',4.9],['Oct 27',4.6],['Today',4.8]];
+
+const S = {
+  role:'Admin', view:'dashboard', live:true, range:'7d',
+  inTok:4820000, outTok:610000, callsToday:1204, costToday:18.40,
+  monthLimit:500, monthUsed:399.62,
+  alerted:{80:false,100:false}, alerts:[], bannerHidden:false,
+  calls:[], selected:null,
+  keys:[
+    { name:'prod-agent', prefix:'tl_live_7f3a', created:'Oct 12', revoked:false },
+    { name:'staging',    prefix:'tl_live_c91e', created:'Oct 20', revoked:false },
+  ],
+};
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const fmtInt = n => n.toLocaleString('en-US');
+const fmtM = n => (n/1e6).toFixed(2)+'M';
+const fmt$ = (n,d=2) => '$'+n.toFixed(d);
+let seed = 7;
+const rnd = () => (seed = (seed*16807) % 2147483647) / 2147483647;
+
+function makeCall(minsAgo){
+  const agents = [['support-agent','claude-sonnet-4-5'],['support-agent','claude-sonnet-4-5'],['triage-bot','gpt-4o']];
+  const [agent, model] = agents[Math.floor(rnd()*agents.length)];
+  const input = Math.round((agent==='triage-bot' ? 5000 : 14000) + rnd()*8000);
+  // jitter shares, then split so parts sum exactly to input
+  let w = CATS.map(c => c.base * (0.6 + rnd()*0.8));
+  const sum = w.reduce((a,b)=>a+b,0);
+  let parts = w.map(x => Math.floor(input * x / sum));
+  parts[parts.length-1] += input - parts.reduce((a,b)=>a+b,0);
+  const outText = Math.round(300 + rnd()*700), outTool = Math.round(rnd()*600);
+  const t = new Date(Date.now() - minsAgo*60000);
+  return {
+    id: Math.random().toString(36).slice(2,8),
+    time: t.toTimeString().slice(0,8), agent, model, input,
+    parts, out:{ text:outText, tool_use:outTool, thinking:0 },
+    output: outText+outTool, cache: Math.round(input*0.6*rnd()),
+    estimated: rnd() < 0.15,
+  };
+}
+const costOf = c => c.input*PRICE_IN + c.output*PRICE_OUT;
+const topCat = c => CATS[c.parts.indexOf(Math.max(...c.parts))].key;
+
+/* ---------- render ---------- */
+function renderNav(){
+  document.querySelectorAll('nav button').forEach(b => {
+    b.setAttribute('aria-current', b.dataset.view===S.view ? 'page' : 'false');
+  });
+  ['dashboard','detail','budgets','keys'].forEach(v => $('v-'+v).classList.toggle('hidden', v!==S.view));
+  if (S.view==='detail' && !S.selected) S.selected = S.calls[0];
+}
+
+function renderKPIs(){
+  $('kIn').textContent = fmtM(S.inTok);
+  $('kCalls').textContent = fmtInt(S.callsToday)+' calls';
+  $('kOut').textContent = fmtM(S.outTok);
+  $('kCost').textContent = fmt$(S.costToday);
+  const pct = S.monthUsed / S.monthLimit * 100;
+  $('kBud').textContent = pct.toFixed(1)+'%';
+  $('kBud').style.color = pct>=80 ? 'var(--warn)' : 'var(--ink)';
+  $('kBudBar').style.cssText = `height:8px;width:${Math.min(pct,100)}%;background:${pct>=80?'#F08C00':'#3B5BDB'}`;
+}
+
+function renderChart(){
+  const max = Math.max(...DAYS.map(d=>d[1]));
+  $('chart').innerHTML = DAYS.map(([lbl,t]) => {
+    const h = t/max*190;
+    const segs = CATS.map(c => `<div title="${c.key}" style="height:${(h*c.base/100).toFixed(1)}px;background:${c.color}"></div>`).join('');
+    return `<div style="flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <span class="muted" style="font-size:12px">${t.toFixed(1)}M</span>
+      <div style="width:100%;max-width:56px;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden">${segs}</div></div>`;
+  }).join('');
+  $('chartX').innerHTML = DAYS.map(d => `<span class="muted" style="flex:1 1 0;text-align:center;font-size:12px">${d[0]}</span>`).join('');
+  $('legend').innerHTML = CATS.map(c => `<li style="display:flex;align-items:center;gap:6px"><span class="swatch" style="background:${c.color}"></span><span class="mono">${c.key}</span></li>`).join('');
+  $('ranges').innerHTML = [['24h','24h'],['7d','7 days'],['30d','30 days']].map(([k,l]) =>
+    `<button class="btn" data-range="${k}" aria-pressed="${S.range===k}" style="min-height:36px;padding:6px 12px;${S.range===k?'background:var(--blue-bg);border-color:var(--blue);color:var(--blue-d);font-weight:600':''}">${l}</button>`).join('');
+}
+
+function renderSplit(){
+  // today's split = sum over simulated calls, seeded with base shares
+  const tot = CATS.map((c,i) => c.base*1000 + S.calls.reduce((a,k)=>a+k.parts[i],0));
+  const all = tot.reduce((a,b)=>a+b,0);
+  const pcts = tot.map(x => x/all*100), maxP = Math.max(...pcts);
+  $('split').innerHTML = CATS.map((c,i) => `
+    <div style="display:grid;grid-template-columns:132px minmax(0,1fr) 48px;align-items:center;gap:10px;font-size:13px">
+      <span class="mono" style="color:var(--ink2)">${c.key}</span>
+      <div class="bar-track"><div style="height:10px;width:${pcts[i]/maxP*100}%;background:${c.color}"></div></div>
+      <span class="num" style="font-weight:600">${pcts[i].toFixed(0)}%</span>
+    </div>`).join('');
+  const td = pcts[1];
+  $('hint').innerHTML = td > 40
+    ? `<strong>Hint:</strong> tool definitions are ${td.toFixed(0)}% of input. If most tools go unused, consider loading tools on demand.`
+    : `<strong>Looks balanced.</strong> Tool definitions are under 40% and history is under 50%.`;
+}
+
+function renderCalls(freshId){
+  $('callRows').innerHTML = S.calls.slice(0,8).map(c => `
+    <tr data-call="${c.id}" class="${c.id===freshId?'fresh':''}" style="cursor:pointer">
+      <td><a href="#" data-call="${c.id}">${c.time}</a></td>
+      <td>${c.agent}</td><td class="mono">${c.model}</td>
+      <td class="num">${fmtInt(c.input)}</td><td class="num">${fmtInt(c.output)}</td>
+      <td class="mono">${topCat(c)}</td><td class="num">${fmt$(costOf(c),3)}</td>
+    </tr>`).join('');
+}
+
+function renderDetail(){
+  const c = S.selected; if (!c) return;
+  $('dTitle').textContent = `Call ${c.time} · ${c.agent}`;
+  $('dEst').classList.toggle('hidden', !c.estimated);
+  $('dIn').textContent = fmtInt(c.input);
+  $('dModel').innerHTML = `<span class="mono">${c.model}</span>`;
+  $('dOut').textContent = fmtInt(c.output);
+  $('dOutSplit').textContent = `text ${fmtInt(c.out.text)} · tool_use ${fmtInt(c.out.tool_use)} · thinking 0`;
+  $('dCache').textContent = fmtInt(c.cache);
+  $('dCost').textContent = fmt$(costOf(c),4);
+  $('dBar').innerHTML = CATS.map((k,i) => `<div title="${k.key}" style="width:${c.parts[i]/c.input*100}%;background:${k.color}"></div>`).join('');
+  $('dRows').innerHTML = CATS.map((k,i) => `
+    <tr><td><span class="swatch" style="background:${k.color};margin-right:8px"></span><span class="mono">${k.key}</span></td>
+    <td class="num">${fmtInt(c.parts[i])}</td><td class="num">${(c.parts[i]/c.input*100).toFixed(1)}%</td>
+    <td class="num">${fmt$(c.parts[i]*PRICE_IN,4)}</td></tr>`).join('') +
+    `<tr><td><strong>Total</strong></td><td class="num"><strong>${fmtInt(c.input)}</strong></td><td class="num">100%</td><td class="num">${fmt$(c.input*PRICE_IN,4)}</td></tr>`;
+  const hints = [];
+  const share = i => c.parts[i]/c.input*100;
+  if (share(1) > 40) hints.push(`Tool definitions are ${share(1).toFixed(0)}% of this call’s input. Send only the tools this step needs.`);
+  if (share(2) > 50) hints.push(`History is ${share(2).toFixed(0)}% of input. Consider summarizing older turns.`);
+  if (share(3) > 20) hints.push(`Tool results are ${share(3).toFixed(0)}% of input. Trim large tool outputs before passing them back.`);
+  $('dHints').innerHTML = `<h2>Optimization hints</h2>` + (hints.length
+    ? `<ul style="margin:10px 0 0;padding-left:20px">${hints.map(h=>`<li>${h}</li>`).join('')}</ul>`
+    : `<p class="muted" style="margin:10px 0 0">No category is above its threshold for this call.</p>`);
+}
+
+function renderBudgets(){
+  const pct = S.monthUsed/S.monthLimit*100;
+  $('bUsed').textContent = fmt$(S.monthUsed);
+  $('bOf').textContent = `of ${fmt$(S.monthLimit)} · ${pct.toFixed(1)}%`;
+  $('bBar').style.cssText = `height:14px;width:${Math.min(pct,100)}%;background:${pct>=80?'#F08C00':'#3B5BDB'}`;
+  const admin = S.role==='Admin';
+  $('budRoleNote').classList.toggle('hidden', admin);
+  $('budForm').querySelectorAll('input,select,button').forEach(el => el.disabled = !admin);
+  $('alertRows').innerHTML = S.alerts.map(a => `<tr><td>${a.when}</td><td><span class="pill" style="background:var(--warn-bg);color:var(--warn)">${a.level}%</span></td><td>${a.detail}</td></tr>`).join('');
+  $('noAlerts').classList.toggle('hidden', S.alerts.length>0);
+}
+
+function renderKeys(){
+  const canEdit = S.role!=='Viewer';
+  $('newKey').disabled = !canEdit;
+  $('keyRoleNote').classList.toggle('hidden', canEdit);
+  $('keyRows').innerHTML = S.keys.map((k,i) => `
+    <tr><td>${k.name}</td><td class="mono">${k.prefix}…</td><td>${k.created}</td>
+    <td>${k.revoked ? '<span class="pill" style="background:#F3F4F6;color:#5F6571">Revoked</span>' : '<span class="pill" style="background:var(--ok-bg);color:var(--ok)">Active</span>'}</td>
+    <td class="num">${k.revoked ? '' : `<button class="btn danger" data-revoke="${i}" ${canEdit?'':'disabled'}>Revoke</button>`}</td></tr>`).join('');
+}
+
+function renderBanner(){
+  const pct = S.monthUsed/S.monthLimit*100;
+  const show = pct>=80 && !S.bannerHidden;
+  $('banner').classList.toggle('hidden', !show);
+  $('bannerTxt').innerHTML = `<strong>Monthly budget ${pct.toFixed(0)}% used</strong> — ${fmt$(S.monthUsed)} of ${fmt$(S.monthLimit)}.`;
+}
+
+function renderAll(freshId){
+  renderNav(); renderKPIs(); renderSplit(); renderCalls(freshId);
+  renderDetail(); renderBudgets(); renderKeys(); renderBanner();
+  document.querySelectorAll('.projName').forEach(e => e.textContent = $('project').value);
+}
+
+/* ---------- live simulation ---------- */
+function toast(msg){
+  const t = $('toast'); t.innerHTML = msg; t.classList.remove('hidden');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.add('hidden'), 5000);
+}
+function ingest(){
+  const c = makeCall(0);
+  S.calls.unshift(c);
+  S.inTok += c.input; S.outTok += c.output; S.callsToday++;
+  const cost = costOf(c); S.costToday += cost; S.monthUsed += cost * 4; // x4: speeds up the demo
+  [80,100].forEach(level => {
+    if (!S.alerted[level] && S.monthUsed/S.monthLimit*100 >= level){
+      S.alerted[level] = true; S.bannerHidden = false;
+      S.alerts.unshift({ when:new Date().toTimeString().slice(0,5), level, detail:`${fmt$(S.monthUsed)} of ${fmt$(S.monthLimit)}` });
+      toast(`<strong>Budget alert:</strong> monthly spend passed ${level}%.`);
+    }
+  });
+  renderAll(c.id);
+}
+let timer = null;
+function setLive(on){
+  S.live = on; clearInterval(timer);
+  if (on) timer = setInterval(ingest, 5000);
+  $('liveBtn').setAttribute('aria-pressed', on);
+  $('liveTxt').textContent = on ? 'Live' : 'Paused';
+  $('liveDot').style.background = on ? 'var(--ok-dot)' : '#ADB5BD';
+  $('liveBtn').style.color = on ? 'var(--ok)' : 'var(--muted)';
+}
+
+/* ---------- events ---------- */
+$('loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  setLive(true); renderAll();
+});
+$('logout').onclick = () => { setLive(false); $('app').classList.add('hidden'); $('login').classList.remove('hidden'); };
+$('liveBtn').onclick = () => setLive(!S.live);
+$('simBtn').onclick = ingest;
+$('role').onchange = e => { S.role = e.target.value; renderAll(); };
+$('project').onchange = () => renderAll();
+$('bannerX').onclick = () => { S.bannerHidden = true; renderBanner(); };
+document.addEventListener('click', e => {
+  const nav = e.target.closest('[data-view],[data-goto]');
+  if (nav){ S.view = nav.dataset.view || nav.dataset.goto; renderAll(); window.scrollTo(0,0); return; }
+  const row = e.target.closest('[data-call]');
+  if (row){ e.preventDefault(); S.selected = S.calls.find(c=>c.id===row.dataset.call); S.view='detail'; renderAll(); window.scrollTo(0,0); return; }
+  const rg = e.target.closest('[data-range]');
+  if (rg){ S.range = rg.dataset.range; renderChart(); return; }
+  const rv = e.target.closest('[data-revoke]');
+  if (rv){ S.keys[+rv.dataset.revoke].revoked = true; renderKeys(); toast('Key revoked. Calls using it now get 401.'); }
+});
+$('budForm').addEventListener('submit', e => {
+  e.preventDefault();
+  S.monthLimit = Math.max(1, +$('bLimit').value || 500);
+  S.alerted = { 80: S.monthUsed/S.monthLimit>=.8, 100: S.monthUsed/S.monthLimit>=1 };
+  renderAll(); toast('Budget saved.');
+});
+$('newKey').onclick = () => {
+  const hex = () => Math.floor(rnd()*16).toString(16);
+  const full = 'tl_live_' + Array.from({length:32}, hex).join('');
+  S.keys.unshift({ name:'new-key-'+(S.keys.length+1), prefix:full.slice(0,12), created:'Today', revoked:false });
+  $('newKeyVal').textContent = full; $('newKeyBox').classList.remove('hidden'); renderKeys();
+};
+$('copyKey').onclick = () => { navigator.clipboard?.writeText($('newKeyVal').textContent); toast('Copied.'); };
+$('doneKey').onclick = () => { $('newKeyVal').textContent = ''; $('newKeyBox').classList.add('hidden'); };
+
+/* ---------- boot ---------- */
+for (let i = 8; i >= 1; i--) S.calls.unshift(makeCall(i)); // newest ends up first
+renderChart();
+</script>
+</body>
+</html>
