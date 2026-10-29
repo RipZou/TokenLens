@@ -1,0 +1,28 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "system": "Alpha beta",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Gamma delta"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 10
+  },
+  "expected": {
+    "system": 5,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 5,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Old policy notes",
+            "tl_category": "retrieval"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": "Noted"
+      },
+      {
+        "role": "user",
+        "content": "Use that policy"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 7
+  },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 1,
+    "tool_results": 0,
+    "retrieval": 3,
+    "user_input": 3,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

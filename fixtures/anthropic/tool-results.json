@@ -1,0 +1,54 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Check the order"
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "t1",
+            "name": "get_order",
+            "input": {
+              "order_id": "A 100"
+            }
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "tool_result",
+            "tool_use_id": "t1",
+            "content": "Shipped on Monday"
+          },
+          {
+            "type": "text",
+            "text": "Thanks"
+          }
+        ]
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 10
+  },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 6,
+    "tool_results": 3,
+    "retrieval": 0,
+    "user_input": 1,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

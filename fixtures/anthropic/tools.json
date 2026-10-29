@@ -1,0 +1,46 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "system": "Be brief",
+    "tools": [
+      {
+        "name": "get_order",
+        "description": "Look up an order",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "description": "The order id"
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        }
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Check order A100"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 14
+  },
+  "expected": {
+    "system": 2,
+    "tool_definitions": 9,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 3,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "system": "Be brief",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I bought shoes"
+      },
+      {
+        "role": "assistant",
+        "content": "What size are they"
+      },
+      {
+        "role": "user",
+        "content": "Size ten please"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 12
+  },
+  "expected": {
+    "system": 2,
+    "tool_definitions": 0,
+    "history": 7,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 3,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

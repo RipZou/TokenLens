@@ -1,0 +1,28 @@
+{
+  "provider": "anthropic",
+  "tokenizer": "words",
+  "request": {
+    "model": "claude-sonnet-4-5",
+    "system": "You are a support agent for this shop and you answer customer questions clearly and briefly every time",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Where is my order today"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 24
+  },
+  "expected": {
+    "system": 18,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 5,
+    "attachments": 0,
+    "overhead": 1,
+    "estimated": false
+  }
+}
