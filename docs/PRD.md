@@ -36,6 +36,8 @@ TokenLens 告诉 agent 开发者：每次调用的 token 花在了哪里，而�
 | 创建 / 删除 project | ✓ | ✓ | — |
 | 生成 / 吊销 API key | ✓ | ✓（仅自己的 project） | — |
 | 设置预算与告警阈值 | ✓ | — | — |
+| Read `model_prices` | ✓ | ✓ | ✓ |
+| Edit `model_prices` | ✓ | — | — |
 | 邀请成员、修改角色 | ✓ | — | — |
 | 导出 CSV | ✓ | ✓ | ✓ |
 
@@ -61,7 +63,7 @@ P0 是拿满 Functionality 分的最小集合，P1 是加分项，Stretch 只在
 
 ## Token 分类设计
 
-分类完全由请求结构决定，同一输入永远得到同一结果。分类器是一个纯函数 `classify(request, usage) → breakdown`，是整个项目 TDD 的主战场。
+Classification is determined by request structure, so the same input always yields the same result. The classifier is a pure function `classify(request, usage, provider, countTokens) → Breakdown`. Callers inject `countTokens`; tests use a deterministic counter. This is the project's main TDD surface.
 
 **Input 类别**
 
@@ -74,18 +76,18 @@ P0 是拿满 Functionality 分的最小集合，P1 是加分项，Stretch 只在
 | `retrieval` | 被 SDK 标记 `tl_category: retrieval` 的内容块（RAG 文档通常夹在 user 消息里，无法自动识别） |
 | `user_input` | 最后一条 user 消息中未被归入上述类别的文本 |
 | `attachments` | 图片、PDF 等非文本块 |
-| `overhead` | API 实际 `input_tokens` 与各类之和的差额（角色标记、格式化开销） |
+| `overhead` | Shortfall added when the local sum is below `input_tokens` by ≤ 5% (role markers, formatting). Overcounts, or gaps above 5%, are scaled across categories instead of dumping the whole gap here. |
 
 **Output 类别**：`text`、`thinking`、`tool_use`。cache read / cache write token 作为独立字段记录，不参与类别拆分。
 
 **计数方法**
 
 1. 每个分段用本地 tokenizer 估算：OpenAI 模型用 `tiktoken`（精确），Claude 模型用近似 tokenizer。
-2. 用 API 返回的真实 `input_tokens` 做校准：若各段之和与真实值偏差 ≤ 5%，差额记为 `overhead`；超过 5% 则按比例缩放各段，并给该条记录打上 `estimated` 标记。
+2. Calibrate to the provider `input_tokens` using `src/lib/classifier/calibrate.ts`: a local shortfall of ≤ 5% becomes `overhead`; a local overcount, or any gap above 5%, scales every category with largest-remainder rounding (ties follow category order). `estimated` is true only when |local sum − target| / target > 5%. If the target is 0, return all zeros. If the target is > 0 and the local sum is 0, put everything in `overhead` and mark estimated.
 3. 各类别之和始终等于真实 `input_tokens`，保证报表总数与账单一致。
-4. 成本 = 各类 token × 模型单价（单价表存在数据库，Admin 可编辑）。
+4. Read unit prices from `model_prices`, including output and cache pricing. Only Admins may edit prices. Show unavailable for unknown prices, never zero.
 
-**隐私**：默认只存每类的 token 数，不存原始 prompt 文本。project 级开关可以打开“保留样本”用于调试。
+**Privacy:** raw content storage stays off by default. Store counts and metadata only, not prompts or tool content. Sample retention needs a separate Issue that defines access, retention, and deletion.
 
 ## 技术架构与数据模型
 
@@ -127,7 +129,7 @@ flowchart LR
 | `users` | id, email, password_hash, created_at |
 | `organizations` | id, name |
 | `memberships` | user_id, org_id, role（ADMIN / DEVELOPER / VIEWER） |
-| `projects` | id, org_id, name, keep_samples |
+| `projects` | id, org_id, name |
 | `api_keys` | id, project_id, key_hash, prefix, created_by, revoked_at |
 | `events` | id, project_id, agent_name, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_usd, estimated, created_at |
 | `event_breakdowns` | event_id, direction（input / output）, category, tokens, cost_usd |
