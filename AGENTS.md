@@ -98,6 +98,7 @@ The classifier splits one model call's input tokens into source categories. Keep
   2. Content marked `tl_category: retrieval` → `retrieval`, even inside another message.
   3. Tool-result blocks → `tool_results`; attachment blocks → `attachments`.
   4. Remaining text in the current user turn → `user_input`; earlier conversation → `history`.
+- **What reaches `countTokens`:** only content strings. Skip the structural keys `type`, `id`, `tool_use_id`, and `tl_category`; count every other string value in the assigned segment. A message `role` chooses the category and is not itself counted. When a `tool_result` block's `content` is a string, count that string only. Do not invent an internal tokenizer: the caller must pass `countTokens`. Fixture tests trim each string and split it on whitespace.
 - Output categories (`text`, `thinking`, `tool_use`) and cache metadata are separate from input categories.
 - **Calibration target:** the provider's `input_tokens`. Keep the provider's original numbers and the raw local counts separately. Follow `src/lib/classifier/calibrate.ts`:
   - Local sum below target by ≤ 5%: add the difference to `overhead`.
