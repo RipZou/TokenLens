@@ -20,10 +20,10 @@ The board, the two milestones, and the sixteen issues give each session a bounda
 
 The workflow rules in `AGENTS.md` match that board. One issue gets one branch. A test commit comes before the feature commit. A pull request names the issue and waits for the partner. That is what made the with-rules history readable: `test(classifier): ... (red)` and then `feat(classifier): ... (green)`. Without those instructions, the no-rules session still produced a working function, but the history does not show a failing test first.
 
-The column name **In Reveiw** was missing an `i`. The assignment asks for **In Review**. A misspelled column is a real Scrum defect even when the cards are in the right places, because a grader looking for the required name will not find it. Renaming the option keeps the existing cards; it does not move them.
+The review column was first created as **In Reveiw**, missing an `i`. We renamed that option to **In Review**. Renaming it kept the existing cards in place.
 
 ## What we would change for Sprint 2
 
-We would add examples for the behavior the prototype only implies: a Developer creates a key only on their own project, a Viewer who creates a project gets 403, an SSE client reconnects with the last event id, and an 80% budget alert fires once rather than on every poll. We would assign owners so the story points stay balanced, and we would move cards when the work moves, including correcting the review column's spelling.
+We would add examples for the behavior the prototype only implies: a Developer creates a key only on their own project, a Viewer who creates a project gets 403, an SSE client reconnects with the last event id, and an 80% budget alert fires once rather than on every poll. We would assign owners so the story points stay balanced, and we would move cards when the work moves.
 
 The next comparison should use the same product prompt on both sides and should include a fixture like the ten-versus-fourteen case, so the score itself catches a flat token threshold. The rules should stay short. When a session repeats a mistake, we add one concrete rule and say why in the commit, which is what `f7fe59a`, `655226b`, and `0f5bf3e` do.
