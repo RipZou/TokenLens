@@ -91,7 +91,7 @@ The items below are the target product. Implement them only when the assigned Is
 
 The classifier splits one model call's input tokens into source categories. Keep the existing signature and calibration behavior.
 
-- **Function:** `classify(request, usage, provider, countTokens): Breakdown`. It is pure: no model API calls, no database access, no input mutation. `countTokens` is injected; tests use a deterministic fixture counter.
+- **Function:** `classify(request, usage, provider, countTokens): Breakdown`. It is pure: no model API calls, no database access, no input mutation. `countTokens` is injected; tests use a deterministic fixture counter. `Breakdown` is the object in `src/lib/classifier/types.ts`, not a flat map of category counts. It has `input` (the eight calibrated category counts), `output` (`text`, `thinking`, `tool_use`), `cache` (`cache_read_tokens`, `cache_write_tokens`), `estimated`, `raw` (the pre-calibration input counts), and `usage` (the provider totals). Do not drop `raw`; calibration must stay reversible.
 - **Categories, in this order:** `system`, `tool_definitions`, `history`, `tool_results`, `retrieval`, `user_input`, `attachments`, `overhead`.
 - **Assignment (each segment counted once):**
   1. System prompt → `system`; tool definitions → `tool_definitions`.
