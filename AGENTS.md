@@ -105,6 +105,7 @@ The classifier splits one model call's input tokens into source categories. Keep
   - Local sum above target, or off by > 5%: scale every category proportionally, using largest-remainder rounding (ties follow the category order).
   - Final counts are nonnegative integers that sum exactly to the target.
 - **`estimated` flag:** true when |local sum − target| / target > 5%. If target > 0 and local sum = 0, put everything in `overhead` and mark estimated. If target = 0, return all zeros and mark estimated when local counts were positive. Reject negative or invalid usage.
+- **5% is relative, not a flat token gap.** Example: ten local words and `input_tokens` of 14. The absolute gap is 4, but |10 − 14| / 14 is about 29%, which is over 5%. Scale the counts so they sum to 14 and set `estimated` to true. Do not store overhead 4 with `estimated` false. The nine shared fixtures do not catch this mistake.
 - **Cost (planned):** read unit prices from `model_prices`, including output and cache pricing. Only Admins may edit prices. Show "unavailable" for unknown prices, never zero.
 
 ## User flows (planned)
