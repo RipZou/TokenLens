@@ -6,7 +6,7 @@ TokenLens helps AI-agent teams understand token usage by source and monitor spen
 
 ## Current scope
 
-Implemented: an Anthropic input classifier, nine fixtures, a shared scorer and unit tests. The full-stack application is planned for Project 2.
+Implemented: an Anthropic input classifier, nine fixtures, a shared scorer and unit tests, and a Next.js app skeleton with CI. The full-stack application is planned for Project 2.
 
 ## Run checks
 
@@ -14,9 +14,11 @@ Use the Node.js version in `.nvmrc`.
 
 ```bash
 npm ci
-npm test
+npm run lint
 npm run typecheck
+npm test
 node scripts/score-anthropic.mjs --check-fixtures
+npm run build
 ```
 
 Fixtures use a deterministic word counter to test classification, not exact provider tokenization. No model API key is required.
