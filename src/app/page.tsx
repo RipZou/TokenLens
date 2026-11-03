@@ -7,6 +7,11 @@ export default function HomePage() {
           Track reported model calls, see which parts of the input context use tokens, and
           monitor spending.
         </p>
+        <p className="mt-6">
+          <a href="/sign-in" className="text-blue-700 underline">
+            Sign in
+          </a>
+        </p>
       </section>
     </main>
   );
