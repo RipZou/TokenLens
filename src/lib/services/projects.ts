@@ -1,7 +1,7 @@
 import { generateApiKey, hashApiKey } from "@/lib/auth/api-keys";
 import { authorize, type Role } from "@/lib/auth/permissions";
 import { requireUser, type SessionClaims } from "@/lib/auth/session";
-import { errorResponse, readJson } from "@/lib/http";
+import { errorResponse, forbidden, readJson } from "@/lib/http";
 import { createProjectSchema } from "@/lib/schemas/projects";
 import type { OrganizationRepository } from "@/lib/services/organization-repository";
 import type { ApiKeyRecord, ProjectRecord, ProjectRepository } from "@/lib/services/project-repository";
@@ -27,14 +27,14 @@ async function projectAccess(
   if (user instanceof Response) return user;
   const project = await deps.projects.findById(projectId);
   const role = project ? await deps.orgs.findRole(project.orgId, user.sub) : null;
-  if (!project || !role) return errorResponse(403, "Forbidden");
+  if (!project || !role) return forbidden();
   return { user, project, role };
 }
 
 function authorizeKeyManagement({ user, project, role }: ProjectAccess): Response | null {
   const denied = authorize(role, "manageApiKeys");
   if (denied) return denied;
-  if (role === "DEVELOPER" && project.createdBy !== user.sub) return errorResponse(403, "Forbidden");
+  if (role === "DEVELOPER" && project.createdBy !== user.sub) return forbidden();
   return null;
 }
 
@@ -47,7 +47,7 @@ export async function handleCreateProject(
   if (user instanceof Response) return user;
   const denied = authorize(await deps.orgs.findRole(orgId, user.sub), "createProject");
   if (denied) return denied;
-  const input = await readJson(request, createProjectSchema, "Invalid request body");
+  const input = await readJson(request, createProjectSchema);
   if (input instanceof Response) return input;
 
   const project = await deps.projects.create({ orgId, name: input.name, createdBy: user.sub });

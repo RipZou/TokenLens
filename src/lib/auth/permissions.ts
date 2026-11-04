@@ -1,3 +1,5 @@
+import { forbidden } from "@/lib/http";
+
 export const ROLES = ["ADMIN", "DEVELOPER", "VIEWER"] as const;
 
 export type Role = (typeof ROLES)[number];
@@ -24,6 +26,5 @@ export function can(role: Role, action: Action): boolean {
 }
 
 export function authorize(role: Role | null, action: Action): Response | null {
-  if (role && can(role, action)) return null;
-  return Response.json({ error: "Forbidden" }, { status: 403 });
+  return role && can(role, action) ? null : forbidden();
 }
