@@ -4,7 +4,15 @@ export function errorResponse(status: number, error: string): Response {
   return Response.json({ error }, { status });
 }
 
-export async function readJson<T>(request: Request, schema: z.ZodType<T>, message: string): Promise<T | Response> {
+export function forbidden(): Response {
+  return errorResponse(403, "Forbidden");
+}
+
+export async function readJson<T>(
+  request: Request,
+  schema: z.ZodType<T>,
+  message = "Invalid request body",
+): Promise<T | Response> {
   let body: unknown;
   try {
     body = await request.json();
