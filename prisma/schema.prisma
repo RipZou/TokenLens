@@ -7,11 +7,74 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  DEVELOPER
+  VIEWER
+
+  @@map("role")
+}
+
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  memberships  Membership[]
+  projects     Project[]
+  apiKeys      ApiKey[]
 
   @@map("users")
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  memberships Membership[]
+  projects    Project[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  userId       String       @map("user_id") @db.Uuid
+  orgId        String       @map("org_id") @db.Uuid
+  role         Role
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@id([userId, orgId])
+  @@index([orgId])
+  @@map("memberships")
+}
+
+model Project {
+  id           String       @id @default(uuid()) @db.Uuid
+  orgId        String       @map("org_id") @db.Uuid
+  name         String
+  createdBy    String       @map("created_by") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator      User         @relation(fields: [createdBy], references: [id])
+  apiKeys      ApiKey[]
+
+  @@index([orgId])
+  @@map("projects")
+}
+
+model ApiKey {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @map("project_id") @db.Uuid
+  keyHash   String    @unique @map("key_hash")
+  prefix    String
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator   User      @relation(fields: [createdBy], references: [id])
+
+  @@index([projectId])
+  @@map("api_keys")
 }

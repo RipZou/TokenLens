@@ -2,28 +2,13 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { clearedSessionCookie, sessionCookie, signSession } from "@/lib/auth/session";
 import { credentialsSchema } from "@/lib/schemas/auth";
 import { DuplicateEmailError, type UserRepository } from "@/lib/auth/user-repository";
+import { errorResponse, readJson } from "@/lib/http";
 
 export type AuthDependencies = {
   users: UserRepository;
   secret: string;
   secure?: boolean;
 };
-
-function errorResponse(status: number, error: string): Response {
-  return Response.json({ error }, { status });
-}
-
-async function readCredentials(request: Request): Promise<{ email: string; password: string } | Response> {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse(400, "Invalid email or password");
-  }
-  const parsed = credentialsSchema.safeParse(body);
-  if (!parsed.success) return errorResponse(400, "Invalid email or password");
-  return parsed.data;
-}
 
 async function signedInResponse(
   user: { id: string; email: string },
@@ -39,7 +24,7 @@ async function signedInResponse(
 
 export async function handleRegister(request: Request, options: AuthDependencies): Promise<Response> {
   if (!options.secret) return errorResponse(500, "Server is missing JWT_SECRET");
-  const credentials = await readCredentials(request);
+  const credentials = await readJson(request, credentialsSchema, "Invalid email or password");
   if (credentials instanceof Response) return credentials;
 
   const existing = await options.users.findByEmail(credentials.email);
@@ -59,7 +44,7 @@ export async function handleRegister(request: Request, options: AuthDependencies
 
 export async function handleSignIn(request: Request, options: AuthDependencies): Promise<Response> {
   if (!options.secret) return errorResponse(500, "Server is missing JWT_SECRET");
-  const credentials = await readCredentials(request);
+  const credentials = await readJson(request, credentialsSchema, "Invalid email or password");
   if (credentials instanceof Response) return credentials;
 
   const user = await options.users.findByEmail(credentials.email);
