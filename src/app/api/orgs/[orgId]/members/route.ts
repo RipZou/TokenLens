@@ -1,5 +1,5 @@
 import { handleAddMember } from "@/lib/services/organizations";
-import { organizationDependencies } from "@/lib/services/route-deps";
+import { organizationDependencies } from "@/lib/auth/route-deps";
 
 export async function POST(
   request: Request,

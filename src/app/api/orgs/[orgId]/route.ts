@@ -1,5 +1,5 @@
 import { handleGetOrganization } from "@/lib/services/organizations";
-import { organizationDependencies } from "@/lib/services/route-deps";
+import { organizationDependencies } from "@/lib/auth/route-deps";
 
 export async function GET(
   request: Request,

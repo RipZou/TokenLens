@@ -1,9 +1,9 @@
 import { authorize, type Role } from "@/lib/auth/permissions";
-import { requireUser } from "@/lib/auth/require-user";
+import { requireUser } from "@/lib/auth/session";
 import type { UserRepository } from "@/lib/auth/user-repository";
+import { errorResponse, readJson } from "@/lib/http";
 import { addMemberSchema, changeRoleSchema, createOrganizationSchema } from "@/lib/schemas/organizations";
 import { DuplicateMemberError, type OrganizationRepository } from "@/lib/services/organization-repository";
-import type { z } from "zod";
 
 export type OrganizationDependencies = {
   users: UserRepository;
@@ -11,21 +11,7 @@ export type OrganizationDependencies = {
   secret: string;
 };
 
-function errorResponse(status: number, error: string): Response {
-  return Response.json({ error }, { status });
-}
-
-async function readBody<T>(request: Request, schema: z.ZodType<T>): Promise<T | Response> {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse(400, "Invalid request body");
-  }
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) return errorResponse(400, "Invalid request body");
-  return parsed.data;
-}
+const INVALID_BODY = "Invalid request body";
 
 export async function handleCreateOrganization(
   request: Request,
@@ -33,7 +19,7 @@ export async function handleCreateOrganization(
 ): Promise<Response> {
   const user = await requireUser(request, deps.secret);
   if (user instanceof Response) return user;
-  const input = await readBody(request, createOrganizationSchema);
+  const input = await readJson(request, createOrganizationSchema, INVALID_BODY);
   if (input instanceof Response) return input;
 
   const organization = await deps.orgs.createWithAdmin(input.name, { id: user.sub, email: user.email });
@@ -66,7 +52,7 @@ export async function handleAddMember(
   if (user instanceof Response) return user;
   const denied = authorize(await deps.orgs.findRole(orgId, user.sub), "manageMembers");
   if (denied) return denied;
-  const input = await readBody(request, addMemberSchema);
+  const input = await readJson(request, addMemberSchema, INVALID_BODY);
   if (input instanceof Response) return input;
 
   const invitee = await deps.users.findByEmail(input.email);
@@ -95,7 +81,7 @@ export async function handleChangeRole(
   if (user instanceof Response) return user;
   const denied = authorize(await deps.orgs.findRole(orgId, user.sub), "manageMembers");
   if (denied) return denied;
-  const input = await readBody(request, changeRoleSchema);
+  const input = await readJson(request, changeRoleSchema, INVALID_BODY);
   if (input instanceof Response) return input;
 
   const members = await deps.orgs.listMembers(orgId);
