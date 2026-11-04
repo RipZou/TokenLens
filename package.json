@@ -7,24 +7,34 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
+    "@types/bcrypt": "6.0.0",
     "@types/node": "24.19.2",
+    "@types/pg": "8.23.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "eslint": "10.14.0",
     "eslint-config-next": "16.4.3",
+    "prisma": "7.10.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "4.1.12"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "bcrypt": "6.0.0",
+    "jose": "6.2.15",
     "next": "16.4.3",
+    "pg": "8.23.1",
     "react": "19.2.9",
-    "react-dom": "19.2.9"
+    "react-dom": "19.2.9",
+    "zod": "4.6.7"
   }
 }

@@ -6,7 +6,7 @@ TokenLens helps AI-agent teams understand token usage by source and monitor spen
 
 ## Current scope
 
-Implemented: an Anthropic input classifier, nine fixtures, a shared scorer and unit tests, and a Next.js app skeleton with CI. The full-stack application is planned for Project 2.
+Implemented: an Anthropic input classifier, nine fixtures, a shared scorer and unit tests, a Next.js app skeleton with CI, and email/password sign-in. Accounts are stored in the `users` table. Set `DATABASE_URL` and `JWT_SECRET`, then apply `prisma/migrations`. The rest of the full-stack application is still planned.
 
 ## Run checks
 
