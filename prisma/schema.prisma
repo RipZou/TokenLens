@@ -7,11 +7,42 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  DEVELOPER
+  VIEWER
+
+  @@map("role")
+}
+
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  memberships  Membership[]
 
   @@map("users")
+}
+
+model Organization {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  userId       String       @map("user_id") @db.Uuid
+  orgId        String       @map("org_id") @db.Uuid
+  role         Role
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@id([userId, orgId])
+  @@index([orgId])
+  @@map("memberships")
 }
