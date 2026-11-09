@@ -4,35 +4,44 @@ TokenLens helps AI-agent teams understand token usage by source and monitor spen
 
 **Team:** [Eileenyuan1](https://github.com/Eileenyuan1) · [RipZou](https://github.com/RipZou)
 
-## Current scope
+**Production:** https://token-lens-chi.vercel.app
 
-Implemented: an Anthropic input classifier, nine fixtures, a shared scorer and unit tests, a Next.js app skeleton with CI, and email/password sign-in. Accounts are stored in the `users` table. Set `DATABASE_URL` and `JWT_SECRET`, then apply `prisma/migrations`. The rest of the full-stack application is still planned.
+## Local setup
 
-## Run checks
-
-Use the Node.js version in `.nvmrc`.
+Requires the Node.js version in `.nvmrc` and PostgreSQL.
 
 ```bash
 npm ci
+export DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/tokenlens"
+export JWT_SECRET="a-long-random-string"
+npx prisma migrate deploy
+npm run dev
+```
+
+## Checks
+
+```bash
 npm run lint
 npm run typecheck
 npm test
-node scripts/score-anthropic.mjs --check-fixtures
-npm run build
+INTEGRATION_DATABASE_URL="postgresql://…/tokenlens_test" npm run test:integration
+E2E_BASE_URL="http://localhost:3000" npm run test:e2e
 ```
 
-Fixtures use a deterministic word counter to test classification, not exact provider tokenization. No model API key is required.
+## Deployment
+
+Vercel deploys a preview for each pull request and production on merge to `main`. Neon gives each preview its own database branch, and `vercel-build` applies migrations before building. Set `JWT_SECRET` in Vercel.
 
 ## Documentation
 
 - [PRD](docs/PRD.md)
-- [Prototype](docs/mockups/tokenlens-prototype.html) — download and open in a browser
+- [Architecture](docs/architecture.md)
+- [Database schema](docs/database.md)
+- [Contribution log](docs/contributions.md)
 - [Agent instructions](AGENTS.md)
-- [HW3 comparison](docs/hw3/before-after.md)
-- [HW3 reflection](docs/hw3/reflection.md)
+- [Prototype](docs/mockups/tokenlens-prototype.html)
+- [HW3 comparison](docs/hw3/before-after.md) · [HW3 reflection](docs/hw3/reflection.md)
 
 ## Planning
 
 [Issues](https://github.com/RipZou/TokenLens/issues) · [Milestones](https://github.com/RipZou/TokenLens/milestones) · [Projects](https://github.com/RipZou/TokenLens/projects)
-
-Board statuses: Backlog, Sprint Todo, In Progress, In Review, Done.
