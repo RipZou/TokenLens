@@ -22,6 +22,10 @@ export class PrismaProjectRepository implements ProjectRepository {
     return this.db.project.findUnique({ where: { id: projectId }, select: PROJECT_FIELDS });
   }
 
+  async listByOrg(orgId: string): Promise<ProjectRecord[]> {
+    return this.db.project.findMany({ where: { orgId }, select: PROJECT_FIELDS, orderBy: { createdAt: "asc" } });
+  }
+
   async createKey(input: NewApiKey): Promise<ApiKeyRecord> {
     return this.db.apiKey.create({ data: input });
   }

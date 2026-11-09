@@ -3,6 +3,7 @@ import type { Role } from "@/lib/auth/permissions";
 import {
   DuplicateMemberError,
   type MemberRecord,
+  type MembershipRecord,
   type OrganizationRecord,
   type OrganizationRepository,
 } from "@/lib/services/organization-repository";
@@ -20,6 +21,16 @@ export class MemoryOrganizationRepository implements OrganizationRepository {
 
   async findById(orgId: string): Promise<OrganizationRecord | null> {
     return this.organizations.get(orgId) ?? null;
+  }
+
+  async listForUser(userId: string): Promise<MembershipRecord[]> {
+    const memberships: MembershipRecord[] = [];
+    for (const [orgId, members] of this.members) {
+      const member = members.find((candidate) => candidate.userId === userId);
+      const organization = this.organizations.get(orgId);
+      if (member && organization) memberships.push({ ...organization, role: member.role });
+    }
+    return memberships;
   }
 
   async findRole(orgId: string, userId: string): Promise<Role | null> {

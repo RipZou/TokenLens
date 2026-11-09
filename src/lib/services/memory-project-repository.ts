@@ -20,6 +20,10 @@ export class MemoryProjectRepository implements ProjectRepository {
     return this.projects.get(projectId) ?? null;
   }
 
+  async listByOrg(orgId: string): Promise<ProjectRecord[]> {
+    return [...this.projects.values()].filter((project) => project.orgId === orgId);
+  }
+
   async createKey(input: NewApiKey): Promise<ApiKeyRecord> {
     const key = { id: randomUUID(), ...input, createdAt: new Date(), revokedAt: null };
     this.keys.push(key);

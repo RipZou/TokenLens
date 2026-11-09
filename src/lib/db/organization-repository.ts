@@ -6,6 +6,7 @@ import { isUuid } from "@/lib/db/uuid";
 import {
   DuplicateMemberError,
   type MemberRecord,
+  type MembershipRecord,
   type OrganizationRecord,
   type OrganizationRepository,
 } from "@/lib/services/organization-repository";
@@ -24,6 +25,16 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
     if (!isUuid(orgId)) return null;
     const row = await this.db.organization.findUnique({ where: { id: orgId } });
     return row ? { id: row.id, name: row.name } : null;
+  }
+
+  async listForUser(userId: string): Promise<MembershipRecord[]> {
+    if (!isUuid(userId)) return [];
+    const rows = await this.db.membership.findMany({
+      where: { userId },
+      include: { organization: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map((row) => ({ ...row.organization, role: row.role }));
   }
 
   async findRole(orgId: string, userId: string): Promise<Role | null> {

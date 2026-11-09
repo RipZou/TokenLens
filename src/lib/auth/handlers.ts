@@ -3,9 +3,11 @@ import { clearedSessionCookie, sessionCookie, signSession } from "@/lib/auth/ses
 import { credentialsSchema } from "@/lib/schemas/auth";
 import { DuplicateEmailError, type UserRepository } from "@/lib/auth/user-repository";
 import { errorResponse, readJson } from "@/lib/http";
+import type { OrganizationRepository } from "@/lib/services/organization-repository";
 
 export type AuthDependencies = {
   users: UserRepository;
+  orgs: OrganizationRepository;
   secret: string;
   secure?: boolean;
 };
@@ -35,6 +37,7 @@ export async function handleRegister(request: Request, options: AuthDependencies
       email: credentials.email,
       passwordHash: await hashPassword(credentials.password),
     });
+    await options.orgs.createWithAdmin("Personal", user);
     return signedInResponse(user, options, 201);
   } catch (error) {
     if (error instanceof DuplicateEmailError) return errorResponse(409, "Email is already registered");

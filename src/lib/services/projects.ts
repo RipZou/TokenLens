@@ -1,6 +1,6 @@
 import { generateApiKey, hashApiKey } from "@/lib/auth/api-keys";
-import { authorize, type Role } from "@/lib/auth/permissions";
-import { requireUser, type SessionClaims } from "@/lib/auth/session";
+import { authorize, can, type Role } from "@/lib/auth/permissions";
+import { requireUser } from "@/lib/auth/session";
 import { errorResponse, forbidden, readJson } from "@/lib/http";
 import { createProjectSchema } from "@/lib/schemas/projects";
 import type { OrganizationRepository } from "@/lib/services/organization-repository";
@@ -12,10 +12,20 @@ export type ProjectDependencies = {
   secret: string;
 };
 
-type ProjectAccess = { user: SessionClaims; project: ProjectRecord; role: Role };
+type ProjectAccess = { userId: string; project: ProjectRecord; role: Role };
 
 function publicKey(key: ApiKeyRecord) {
   return { id: key.id, prefix: key.prefix, createdAt: key.createdAt, revokedAt: key.revokedAt };
+}
+
+async function findProjectAccess(
+  userId: string,
+  projectId: string,
+  deps: ProjectDependencies,
+): Promise<ProjectAccess | null> {
+  const project = await deps.projects.findById(projectId);
+  const role = project ? await deps.orgs.findRole(project.orgId, userId) : null;
+  return project && role ? { userId, project, role } : null;
 }
 
 async function projectAccess(
@@ -25,17 +35,12 @@ async function projectAccess(
 ): Promise<ProjectAccess | Response> {
   const user = await requireUser(request, deps.secret);
   if (user instanceof Response) return user;
-  const project = await deps.projects.findById(projectId);
-  const role = project ? await deps.orgs.findRole(project.orgId, user.sub) : null;
-  if (!project || !role) return forbidden();
-  return { user, project, role };
+  return (await findProjectAccess(user.sub, projectId, deps)) ?? forbidden();
 }
 
-function authorizeKeyManagement({ user, project, role }: ProjectAccess): Response | null {
-  const denied = authorize(role, "manageApiKeys");
-  if (denied) return denied;
-  if (role === "DEVELOPER" && project.createdBy !== user.sub) return forbidden();
-  return null;
+function canManageKeys({ userId, project, role }: ProjectAccess): boolean {
+  if (!can(role, "manageApiKeys")) return false;
+  return role !== "DEVELOPER" || project.createdBy === userId;
 }
 
 export async function handleCreateProject(
@@ -61,11 +66,10 @@ export async function handleCreateApiKey(
 ): Promise<Response> {
   const access = await projectAccess(request, projectId, deps);
   if (access instanceof Response) return access;
-  const denied = authorizeKeyManagement(access);
-  if (denied) return denied;
+  if (!canManageKeys(access)) return forbidden();
 
   const { key, prefix, keyHash } = generateApiKey();
-  const record = await deps.projects.createKey({ projectId, keyHash, prefix, createdBy: access.user.sub });
+  const record = await deps.projects.createKey({ projectId, keyHash, prefix, createdBy: access.userId });
   return Response.json({ ...publicKey(record), key }, { status: 201 });
 }
 
@@ -89,8 +93,7 @@ export async function handleRevokeApiKey(
 ): Promise<Response> {
   const access = await projectAccess(request, projectId, deps);
   if (access instanceof Response) return access;
-  const denied = authorizeKeyManagement(access);
-  if (denied) return denied;
+  if (!canManageKeys(access)) return forbidden();
 
   const key = await deps.projects.revokeKey(projectId, keyId);
   if (!key) return errorResponse(404, "API key not found");
@@ -105,4 +108,26 @@ export async function authenticateApiKey(
   const key = match ? await projects.findKeyByHash(hashApiKey(match[1])) : null;
   if (!key || key.revokedAt) return errorResponse(401, "Invalid or revoked API key");
   return { keyId: key.id, projectId: key.projectId };
+}
+
+export async function listProjectsForUser(userId: string, deps: ProjectDependencies) {
+  const memberships = await deps.orgs.listForUser(userId);
+  return Promise.all(
+    memberships.map(async (membership) => ({
+      ...membership,
+      canCreateProject: can(membership.role, "createProject"),
+      projects: (await deps.projects.listByOrg(membership.id)).map(({ id, name }) => ({ id, name })),
+    })),
+  );
+}
+
+export async function loadKeysPage(userId: string, projectId: string, deps: ProjectDependencies) {
+  const access = await findProjectAccess(userId, projectId, deps);
+  if (!access) return null;
+  const keys = await deps.projects.listKeys(projectId);
+  return {
+    project: { id: access.project.id, name: access.project.name, orgId: access.project.orgId },
+    canManageKeys: canManageKeys(access),
+    keys: keys.map(publicKey),
+  };
 }

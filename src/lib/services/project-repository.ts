@@ -20,6 +20,7 @@ export type NewApiKey = Pick<ApiKeyRecord, "projectId" | "keyHash" | "prefix" | 
 export interface ProjectRepository {
   create(input: Omit<ProjectRecord, "id">): Promise<ProjectRecord>;
   findById(projectId: string): Promise<ProjectRecord | null>;
+  listByOrg(orgId: string): Promise<ProjectRecord[]>;
   createKey(input: NewApiKey): Promise<ApiKeyRecord>;
   listKeys(projectId: string): Promise<ApiKeyRecord[]>;
   findKeyByHash(keyHash: string): Promise<ApiKeyRecord | null>;
