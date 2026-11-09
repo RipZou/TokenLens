@@ -50,6 +50,16 @@ export function readCookie(header: string | null, name: string): string | null {
   return null;
 }
 
+export async function readRequestSession(request: Request, secret: string): Promise<SessionClaims | null> {
+  const token = readCookie(request.headers.get("cookie"), SESSION_COOKIE);
+  return token ? readSession(token, secret) : null;
+}
+
+export async function requireUser(request: Request, secret: string): Promise<SessionClaims | Response> {
+  const session = await readRequestSession(request, secret);
+  return session ?? Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+
 export function sessionCookie(token: string, secure: boolean): string {
   const parts = [
     `${SESSION_COOKIE}=${token}`,
