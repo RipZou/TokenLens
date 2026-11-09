@@ -11,6 +11,8 @@ export type MemberRecord = {
   role: Role;
 };
 
+export type MembershipRecord = OrganizationRecord & { role: Role };
+
 export class DuplicateMemberError extends Error {
   constructor() {
     super("User is already a member");
@@ -21,6 +23,7 @@ export class DuplicateMemberError extends Error {
 export interface OrganizationRepository {
   createWithAdmin(name: string, admin: { id: string; email: string }): Promise<OrganizationRecord>;
   findById(orgId: string): Promise<OrganizationRecord | null>;
+  listForUser(userId: string): Promise<MembershipRecord[]>;
   findRole(orgId: string, userId: string): Promise<Role | null>;
   listMembers(orgId: string): Promise<MemberRecord[]>;
   addMember(orgId: string, member: MemberRecord): Promise<MemberRecord>;

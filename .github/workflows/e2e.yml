@@ -1,0 +1,53 @@
+name: E2E
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: read
+  pull-requests: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E against Vercel preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for the Vercel preview
+        id: preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          state=pending
+          for attempt in $(seq 1 60); do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/status" --jq '[.statuses[] | select(.context == "Vercel")][0].state // "pending"')
+            if [ "$state" != "pending" ]; then break; fi
+            sleep 10
+          done
+          if [ "$state" != "success" ]; then echo "Vercel preview is $state"; exit 1; fi
+          url=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --jq '[.[] | select(.user.login == "vercel[bot]") | .body][-1]' | grep -oE 'https://[a-z0-9-]+\.vercel\.app' | head -1)
+          if [ -z "$url" ]; then echo "No preview URL in the Vercel comment"; exit 1; fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          E2E_BASE_URL: ${{ steps.preview.outputs.url }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report

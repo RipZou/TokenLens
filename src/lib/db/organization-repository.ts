@@ -2,14 +2,14 @@ import { Prisma } from "@/generated/prisma/client";
 import type { PrismaClient } from "@/generated/prisma/client";
 import type { Role } from "@/lib/auth/permissions";
 import { getPrisma } from "@/lib/db/prisma";
+import { isUuid } from "@/lib/db/uuid";
 import {
   DuplicateMemberError,
   type MemberRecord,
+  type MembershipRecord,
   type OrganizationRecord,
   type OrganizationRepository,
 } from "@/lib/services/organization-repository";
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class PrismaOrganizationRepository implements OrganizationRepository {
   constructor(private readonly db: PrismaClient) {}
@@ -22,19 +22,29 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
   }
 
   async findById(orgId: string): Promise<OrganizationRecord | null> {
-    if (!UUID_PATTERN.test(orgId)) return null;
+    if (!isUuid(orgId)) return null;
     const row = await this.db.organization.findUnique({ where: { id: orgId } });
     return row ? { id: row.id, name: row.name } : null;
   }
 
+  async listForUser(userId: string): Promise<MembershipRecord[]> {
+    if (!isUuid(userId)) return [];
+    const rows = await this.db.membership.findMany({
+      where: { userId },
+      include: { organization: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map((row) => ({ ...row.organization, role: row.role }));
+  }
+
   async findRole(orgId: string, userId: string): Promise<Role | null> {
-    if (!UUID_PATTERN.test(orgId) || !UUID_PATTERN.test(userId)) return null;
+    if (!isUuid(orgId) || !isUuid(userId)) return null;
     const row = await this.db.membership.findUnique({ where: { userId_orgId: { userId, orgId } } });
     return row?.role ?? null;
   }
 
   async listMembers(orgId: string): Promise<MemberRecord[]> {
-    if (!UUID_PATTERN.test(orgId)) return [];
+    if (!isUuid(orgId)) return [];
     const rows = await this.db.membership.findMany({
       where: { orgId },
       include: { user: { select: { email: true } } },
