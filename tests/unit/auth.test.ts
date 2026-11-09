@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { gateDashboard } from "@/lib/auth/gate";
+import { gateProtectedPages } from "@/lib/auth/gate";
 import { handleRegister, handleSignIn, handleSignOut } from "@/lib/auth/handlers";
 import { MemoryUserRepository } from "@/lib/auth/memory-user-repository";
 import { signSession } from "@/lib/auth/session";
+import { MemoryOrganizationRepository } from "@/lib/services/memory-organization-repository";
 
 const SECRET = "test-secret-that-is-long-enough-for-hs256";
 
@@ -26,7 +27,7 @@ describe("email and password authentication", () => {
         email: "Dev@Example.com",
         password: "correct-password",
       }),
-      { users, secret: SECRET },
+      { users, orgs: new MemoryOrganizationRepository(), secret: SECRET },
     );
 
     expect(response.status).toBe(201);
@@ -45,12 +46,12 @@ describe("email and password authentication", () => {
     const users = new MemoryUserRepository();
     await handleRegister(
       post("/api/auth/register", { email: "dev@example.com", password: "correct-password" }),
-      { users, secret: SECRET },
+      { users, orgs: new MemoryOrganizationRepository(), secret: SECRET },
     );
 
     const response = await handleSignIn(
       post("/api/auth/sign-in", { email: "dev@example.com", password: "correct-password" }),
-      { users, secret: SECRET },
+      { users, orgs: new MemoryOrganizationRepository(), secret: SECRET },
     );
 
     expect(response.status).toBe(200);
@@ -63,12 +64,12 @@ describe("email and password authentication", () => {
     const users = new MemoryUserRepository();
     await handleRegister(
       post("/api/auth/register", { email: "dev@example.com", password: "correct-password" }),
-      { users, secret: SECRET },
+      { users, orgs: new MemoryOrganizationRepository(), secret: SECRET },
     );
 
     const response = await handleSignIn(
       post("/api/auth/sign-in", { email: "dev@example.com", password: "wrong-password" }),
-      { users, secret: SECRET },
+      { users, orgs: new MemoryOrganizationRepository(), secret: SECRET },
     );
 
     expect(response.status).toBe(401);
@@ -76,7 +77,7 @@ describe("email and password authentication", () => {
   });
 
   it("redirects an unauthenticated dashboard visit to the sign-in page", async () => {
-    const response = await gateDashboard(new Request("http://localhost/dashboard"), {
+    const response = await gateProtectedPages(new Request("http://localhost/dashboard"), {
       secret: SECRET,
     });
 
@@ -85,7 +86,7 @@ describe("email and password authentication", () => {
   });
 
   it("redirects a dashboard visit with an invalid session cookie", async () => {
-    const response = await gateDashboard(
+    const response = await gateProtectedPages(
       new Request("http://localhost/dashboard", {
         headers: { cookie: "tokenlens_session=not-a-jwt" },
       }),
@@ -98,7 +99,7 @@ describe("email and password authentication", () => {
 
   it("allows a dashboard visit that carries a valid session cookie", async () => {
     const token = await signSession({ sub: "user-1", email: "dev@example.com" }, SECRET);
-    const response = await gateDashboard(
+    const response = await gateProtectedPages(
       new Request("http://localhost/dashboard", {
         headers: { cookie: `tokenlens_session=${token}` },
       }),
@@ -106,6 +107,29 @@ describe("email and password authentication", () => {
     );
 
     expect(response).toBeNull();
+  });
+
+  it("creates a personal organization with the new user as Admin", async () => {
+    const users = new MemoryUserRepository();
+    const orgs = new MemoryOrganizationRepository();
+    const response = await handleRegister(
+      post("/api/auth/register", { email: "dev@example.com", password: "correct-password" }),
+      { users, orgs, secret: SECRET },
+    );
+
+    const { id } = (await response.json()) as { id: string };
+    const memberships = await orgs.listForUser(id);
+    expect(memberships).toHaveLength(1);
+    expect(memberships[0].role).toBe("ADMIN");
+  });
+
+  it("redirects an unauthenticated projects visit to the sign-in page", async () => {
+    const response = await gateProtectedPages(new Request("http://localhost/projects/abc"), {
+      secret: SECRET,
+    });
+
+    expect(response?.status).toBe(307);
+    expect(response?.headers.get("location")).toBe("http://localhost/sign-in");
   });
 
   it("clears the session cookie on sign-out", async () => {

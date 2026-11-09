@@ -11,6 +11,8 @@ import {
   handleCreateProject,
   handleListApiKeys,
   handleRevokeApiKey,
+  listProjectsForUser,
+  loadKeysPage,
   type ProjectDependencies,
 } from "@/lib/services/projects";
 
@@ -324,5 +326,47 @@ describe("reporting key authentication", () => {
     );
 
     expect(result instanceof Response && result.status).toBe(401);
+  });
+});
+
+describe("project pages", () => {
+  it("lists each organization with its projects and whether the user can create one", async () => {
+    const world = await setup();
+    await projectIdFor(world, world.dev);
+
+    const devView = await listProjectsForUser(world.dev.id, world.deps);
+    const viewerView = await listProjectsForUser(world.viewer.id, world.deps);
+    const outsiderView = await listProjectsForUser(world.outsider.id, world.deps);
+
+    expect(devView).toHaveLength(1);
+    expect(devView[0].role).toBe("DEVELOPER");
+    expect(devView[0].canCreateProject).toBe(true);
+    expect(devView[0].projects.map((project) => project.name)).toEqual(["Support agent"]);
+    expect(viewerView[0].canCreateProject).toBe(false);
+    expect(outsiderView).toEqual([]);
+  });
+
+  it("loads a project's keys without the hash and says who can manage them", async () => {
+    const world = await setup();
+    const projectId = await projectIdFor(world, world.dev);
+    await issueKey(world, projectId, world.dev);
+
+    const owner = await loadKeysPage(world.dev.id, projectId, world.deps);
+    const otherDev = await loadKeysPage(world.otherDev.id, projectId, world.deps);
+    const viewer = await loadKeysPage(world.viewer.id, projectId, world.deps);
+
+    expect(owner?.project.name).toBe("Support agent");
+    expect(owner?.canManageKeys).toBe(true);
+    expect(owner?.keys).toHaveLength(1);
+    expect(owner?.keys[0]).not.toHaveProperty("keyHash");
+    expect(otherDev?.canManageKeys).toBe(false);
+    expect(viewer?.canManageKeys).toBe(false);
+  });
+
+  it("returns nothing for a non-member opening a project's keys", async () => {
+    const world = await setup();
+    const projectId = await projectIdFor(world, world.dev);
+
+    expect(await loadKeysPage(world.outsider.id, projectId, world.deps)).toBeNull();
   });
 });
