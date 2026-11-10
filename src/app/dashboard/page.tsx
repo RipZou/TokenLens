@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
-import { CallList } from "@/components/call-list";
+import { LiveCalls } from "@/components/live-calls";
 import { TodaySplit, UsageChart } from "@/components/usage-chart";
 import { requirePageUser } from "@/lib/auth/page-session";
 import { callDependencies } from "@/lib/auth/route-deps";
@@ -148,8 +148,14 @@ function DashboardView({ dashboard }: { dashboard: DashboardData }) {
 
       <section className="rounded-lg bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Recent calls</h2>
-        <p className="mt-1 text-sm text-gray-600">Newest calls are listed first. Open a row for its breakdown.</p>
-        <CallList calls={dashboard.calls} />
+        <p className="mt-1 text-sm text-gray-600">New calls appear at the top without a refresh. Open a row for its breakdown.</p>
+        <LiveCalls
+          key={[dashboard.projectId ?? "all", dashboard.agent ?? "", dashboard.model ?? "", dashboard.range].join("|")}
+          calls={dashboard.calls}
+          projectIds={dashboard.projectId ? [dashboard.projectId] : dashboard.projects.map((project) => project.id)}
+          agent={dashboard.agent}
+          model={dashboard.model}
+        />
       </section>
     </>
   );

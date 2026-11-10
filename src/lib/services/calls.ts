@@ -93,7 +93,7 @@ function largestCategory(totals: CategoryTotal[]): InputCategory {
   return totals.reduce((best, item) => (item.tokens > best.tokens ? item : best)).category;
 }
 
-function toListItem(event: StoredEvent): CallListItem {
+export function summarizeCall(event: StoredEvent): CallListItem {
   return {
     id: event.id,
     projectId: event.projectId,
@@ -160,7 +160,7 @@ function sumCategories(events: StoredEvent[]): CategoryTotal[] {
   return totals;
 }
 
-async function accessibleProjects(userId: string, deps: CallDependencies): Promise<{ id: string; name: string }[]> {
+export async function readableProjects(userId: string, deps: CallDependencies): Promise<{ id: string; name: string }[]> {
   const memberships = await deps.orgs.listForUser(userId);
   const grouped = await Promise.all(memberships.map((membership) => deps.projects.listByOrg(membership.id)));
   return grouped.flat().map(({ id, name }) => ({ id, name }));
@@ -172,7 +172,7 @@ export async function loadDashboard(
   now: Date,
   deps: CallDependencies,
 ): Promise<LoadedDashboard> {
-  const projects = await accessibleProjects(userId, deps);
+  const projects = await readableProjects(userId, deps);
   const requested = query.projectId?.trim() || null;
   if (requested && !projects.some((project) => project.id === requested)) return { status: 403 };
   const projectIds = requested ? [requested] : projects.map((project) => project.id);
@@ -197,7 +197,7 @@ export async function loadDashboard(
       agent,
       model,
       range,
-      calls: filtered.map(toListItem),
+      calls: filtered.map(summarizeCall),
       totals: {
         inputTokens: filtered.reduce((sum, event) => sum + event.inputTokens, 0),
         outputTokens: filtered.reduce((sum, event) => sum + event.outputTokens, 0),
@@ -216,13 +216,13 @@ export async function loadCallDetail(
   eventId: string,
   deps: CallDependencies,
 ): Promise<CallDetail | null> {
-  const projects = await accessibleProjects(userId, deps);
+  const projects = await readableProjects(userId, deps);
   if (!projects.some((project) => project.id === projectId)) return null;
   const event = await deps.events.findInProjects(eventId, [projectId]);
   if (!event) return null;
   const totals = inputTotals(event);
   return {
-    ...toListItem(event),
+    ...summarizeCall(event),
     externalId: event.externalId,
     cacheReadTokens: event.cacheReadTokens,
     cacheWriteTokens: event.cacheWriteTokens,

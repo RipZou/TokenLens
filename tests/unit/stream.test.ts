@@ -49,20 +49,23 @@ function event(projectId: string, agentName: string, createdAt: Date): Omit<Stor
   };
 }
 
-async function readText(response: Response, stop: (text: string) => boolean): Promise<string> {
+function readerOf(response: Response) {
   const reader = response.body?.getReader();
-  if (!reader) return "";
   const decoder = new TextDecoder();
   let text = "";
-  const deadline = Date.now() + 1000;
-  while (!stop(text) && Date.now() < deadline) {
-    const next = await Promise.race([
-      reader.read().then((chunk) => chunk),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 40)),
-    ]);
-    if (next && "value" in next && next.value) text += decoder.decode(next.value);
-  }
-  return text;
+  return {
+    text: () => text,
+    async until(stop: (value: string) => boolean) {
+      if (!reader) return text;
+      const deadline = Date.now() + 1000;
+      while (!stop(text) && Date.now() < deadline) {
+        const { value, done } = await reader.read();
+        if (value) text += decoder.decode(value);
+        if (done) break;
+      }
+      return text;
+    },
+  };
 }
 
 describe("live call stream", () => {
@@ -97,14 +100,15 @@ describe("live call stream", () => {
       deps,
     );
     expect(response.headers.get("content-type")).toContain("text/event-stream");
-    const opened = await readText(response, (text) => text.includes("retry:"));
+    const live = readerOf(response);
+    const opened = await live.until((text) => text.includes("retry:"));
     expect(opened).toContain("retry: 1000");
 
     const stored = await events.create(event(project.id, "support-agent", new Date(Date.now() + 50)));
     publishStoredEvent(stored);
-    const live = await readText(response, (text) => text.includes("support-agent"));
-    expect(live).toContain(`id: ${stored.id}`);
-    expect(live).toContain('"costUsd":null');
+    const delivered = await live.until((text) => text.includes("support-agent"));
+    expect(delivered).toContain(`id: ${stored.id}`);
+    expect(delivered).toContain('"costUsd":null');
     controller.abort();
 
     const resume = new AbortController();
@@ -115,11 +119,13 @@ describe("live call stream", () => {
       }),
       deps,
     );
+    const resumedReader = readerOf(again);
+    await resumedReader.until((text) => text.includes("retry:"));
     const hidden = await events.create(event(other.id, "other-project", new Date(Date.now() + 80)));
     publishStoredEvent(hidden);
     const newer = await events.create(event(project.id, "triage-bot", new Date(Date.now() + 100)));
     publishStoredEvent(newer);
-    const resumed = await readText(again, (text) => text.includes("triage-bot"));
+    const resumed = await resumedReader.until((text) => text.includes("triage-bot"));
     expect(resumed).toContain("triage-bot");
     expect(resumed).not.toContain("support-agent");
     expect(resumed).not.toContain("other-project");
@@ -133,8 +139,10 @@ describe("live call stream", () => {
       new Request(`http://localhost/api/v1/stream?projectId=${project.id}`, { headers: { cookie }, signal: controller.signal }),
       deps,
     );
+    const polled = readerOf(response);
+    await polled.until((text) => text.includes("retry:"));
     await events.create(event(project.id, "polled-agent", new Date(Date.now() + 20)));
-    const text = await readText(response, (value) => value.includes("polled-agent"));
+    const text = await polled.until((value) => value.includes("polled-agent"));
     expect(text).toContain("polled-agent");
     controller.abort();
   });
