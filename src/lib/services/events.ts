@@ -6,6 +6,7 @@ import { errorResponse } from "@/lib/http";
 import { ingestEventSchema } from "@/lib/schemas/events";
 import type { BudgetRepository } from "@/lib/services/budget-repository";
 import { priceForEvent, recordBudgetAlerts } from "@/lib/services/budgets";
+import { publishStoredEvent } from "@/lib/services/call-bus";
 import { DuplicateEventError, type EventRepository } from "@/lib/services/event-repository";
 import { authenticateApiKey } from "@/lib/services/projects";
 import type { ProjectRepository } from "@/lib/services/project-repository";
@@ -75,7 +76,7 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
     : null;
 
   try {
-    await deps.events.create({
+    const stored = await deps.events.create({
       externalId: input.data.id,
       projectId: auth.projectId,
       agentName: input.data.agent,
@@ -100,6 +101,7 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
         })),
       ],
     });
+    publishStoredEvent(stored);
   } catch (error) {
     if (error instanceof DuplicateEventError) return errorResponse(409, "Event ID already exists");
     throw error;

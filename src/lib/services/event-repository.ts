@@ -32,4 +32,6 @@ export class DuplicateEventError extends Error {
 
 export interface EventRepository {
   create(input: NewEvent): Promise<StoredEvent>;
+  listInRange(projectIds: string[], since: Date): Promise<StoredEvent[]>;
+  findInProjects(id: string, projectIds: string[]): Promise<StoredEvent | null>;
 }

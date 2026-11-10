@@ -30,25 +30,7 @@ export class PrismaEventRepository implements EventRepository {
         },
         include: { breakdowns: true },
       });
-      return {
-        id: row.id,
-        externalId: row.externalId,
-        projectId: row.projectId,
-        agentName: row.agentName,
-        model: row.model,
-        inputTokens: row.inputTokens,
-        outputTokens: row.outputTokens,
-        cacheReadTokens: row.cacheReadTokens,
-        cacheWriteTokens: row.cacheWriteTokens,
-        estimated: row.estimated,
-        createdAt: row.createdAt,
-        costUsd: row.costUsd === null ? null : row.costUsd.toFixed(8),
-        breakdowns: row.breakdowns.map((item) => ({
-          direction: item.direction,
-          category: item.category,
-          tokens: item.tokens,
-        })),
-      };
+      return toStored(row);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         throw new DuplicateEventError();
@@ -56,6 +38,61 @@ export class PrismaEventRepository implements EventRepository {
       throw error;
     }
   }
+
+  async listInRange(projectIds: string[], since: Date): Promise<StoredEvent[]> {
+    if (projectIds.length === 0) return [];
+    const rows = await this.db.event.findMany({
+      where: { projectId: { in: projectIds }, createdAt: { gte: since } },
+      include: { breakdowns: true },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
+    return rows.map(toStored);
+  }
+
+  async findInProjects(id: string, projectIds: string[]): Promise<StoredEvent | null> {
+    if (projectIds.length === 0) return null;
+    const row = await this.db.event.findFirst({
+      where: { id, projectId: { in: projectIds } },
+      include: { breakdowns: true },
+    });
+    return row ? toStored(row) : null;
+  }
+}
+
+function toStored(row: {
+  id: string;
+  externalId: string;
+  projectId: string;
+  agentName: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  estimated: boolean;
+  createdAt: Date;
+  costUsd: { toFixed(digits: number): string } | null;
+  breakdowns: { direction: "input" | "output"; category: string; tokens: number }[];
+}): StoredEvent {
+  return {
+    id: row.id,
+    externalId: row.externalId,
+    projectId: row.projectId,
+    agentName: row.agentName,
+    model: row.model,
+    inputTokens: row.inputTokens,
+    outputTokens: row.outputTokens,
+    cacheReadTokens: row.cacheReadTokens,
+    cacheWriteTokens: row.cacheWriteTokens,
+    estimated: row.estimated,
+    createdAt: row.createdAt,
+    costUsd: row.costUsd === null ? null : row.costUsd.toFixed(8),
+    breakdowns: row.breakdowns.map((item) => ({
+      direction: item.direction,
+      category: item.category,
+      tokens: item.tokens,
+    })),
+  };
 }
 
 export function getEventRepository(): EventRepository {

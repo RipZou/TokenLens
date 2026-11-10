@@ -4,6 +4,7 @@ import { handleRegister } from "@/lib/auth/handlers";
 import { readCookie, SESSION_COOKIE } from "@/lib/auth/session";
 import { PrismaEventRepository } from "@/lib/db/event-repository";
 import { PrismaBudgetRepository } from "@/lib/db/budget-repository";
+import { loadCallDetail } from "@/lib/services/calls";
 import { handleIngestEvent } from "@/lib/services/events";
 import { handleGetBudgets, handlePutBudget, handlePutModelPrice } from "@/lib/services/budgets";
 import { handleAddMember, handleGetOrganization } from "@/lib/services/organizations";
@@ -175,6 +176,45 @@ describe("PostgreSQL access rules", () => {
 
     const duplicate = await handleIngestEvent(call("evt-1"), deps);
     expect(duplicate.status).toBe(409);
+  });
+
+  it("shows a reported call to a member and hides it from other users", async () => {
+    const admin = await register("admin@example.com");
+    const outsider = await register("outsider@example.com");
+    const projectResponse = await createProject(admin.orgId, admin);
+    const { id: projectId } = (await projectResponse.json()) as { id: string };
+    const key = await createKey(projectId, admin);
+    const ingest = { projects: repos.projects, events: new PrismaEventRepository(db), rateLimiter: new MemoryRateLimiter() };
+    const created = await handleIngestEvent(
+      new Request("http://localhost/api/v1/events", {
+        method: "POST",
+        headers: { authorization: `Bearer ${key.key}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          id: "evt-detail",
+          provider: "anthropic",
+          agent: "support-agent",
+          model: "claude-sonnet-4-5",
+          request: {
+            model: "claude-sonnet-4-5",
+            system: "You are a support agent",
+            messages: [{ role: "user", content: "Where is my order" }],
+          },
+          usage: { input_tokens: 9, output_tokens: 2 },
+        }),
+      }),
+      ingest,
+    );
+    expect(created.status).toBe(201);
+    const row = await db.event.findFirstOrThrow({ where: { projectId, externalId: "evt-detail" } });
+    const callDeps = { orgs: repos.orgs, projects: repos.projects, events: ingest.events };
+
+    const detail = await loadCallDetail(admin.id, projectId, row.id, callDeps);
+    const hidden = await loadCallDetail(outsider.id, projectId, row.id, callDeps);
+
+    expect(detail?.inputTokens).toBe(9);
+    expect(detail?.input.find((item) => item.category === "user_input")?.tokens).toBe(4);
+    expect(detail?.costUsd).toBeNull();
+    expect(hidden).toBeNull();
   });
 
   it("stores one alert per threshold when priced spend reaches the daily budget", async () => {
