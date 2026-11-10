@@ -1,13 +1,13 @@
 # Architecture
 
-One Next.js app on Vercel serves pages and APIs. Data lives in Neon PostgreSQL. Dashed lines are planned.
+One Next.js app on Vercel serves pages and APIs. Data lives in Neon PostgreSQL.
 
 ```mermaid
 flowchart LR
     B["Browser"] -- "session cookie" --> APP["Next.js<br/>pages and API routes"]
-    A["AI agent"] -. "reporting key" .-> APP
+    A["AI agent"] -- "reporting key" --> APP
     APP --> S["Services<br/>validation, permissions"]
-    S -.-> C["Classifier"]
+    S --> C["Classifier"]
     S --> DB[("Neon PostgreSQL")]
 ```
 

@@ -6,7 +6,7 @@ This file describes two layers. Do not treat planned app work as present in the 
 
 ## Current app
 
-Implemented: the Anthropic classifier, sign-in, organizations and roles, projects, and reporting keys. Ingestion, dashboards and budgets are planned.
+Implemented: the Anthropic classifier, sign-in, organizations and roles, projects, reporting keys, and ingestion (`POST /api/v1/events`). Dashboards and budgets are planned.
 
 - **Stack:** Node.js 24.22.2 (`.nvmrc`), Next.js 16 App Router, Tailwind 4, Prisma 7 on Neon PostgreSQL, Zod 4, jose, bcrypt, Vitest, Playwright. `package.json` pins exact versions; do not add or upgrade packages without approval.
 - **Commands:** `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration` (needs `INTEGRATION_DATABASE_URL`), `npm run test:e2e` (needs `E2E_BASE_URL`).
@@ -47,7 +47,6 @@ Implemented: the Anthropic classifier, sign-in, organizations and roles, project
 The items below are the target product. Implement them only when the assigned Issue asks for them. Do not create empty scaffolding for unused folders.
 
 - **Planned libraries:** Recharts 3 (charts). Add Prettier only with the Issue that introduces it.
-- Ingestion lives under `src/app/api/v1/` and authenticates with `authenticateApiKey` from `src/lib/services/projects.ts`.
 - Live updates use Server-Sent Events (SSE), one stream per project.
 - Calculate costs with decimal-safe arithmetic; do not round each event to cents.
 
@@ -55,7 +54,7 @@ The items below are the target product. Implement them only when the assigned Is
 
 | Path | Responsibility |
 | --- | --- |
-| `src/app/api/v1/` | Public Route Handlers: ingestion and query APIs |
+| `src/app/api/v1/` | Public query APIs |
 | `fixtures/openai/` | Fixed OpenAI request/usage examples |
 
 ### Planned testing

@@ -8,6 +8,8 @@ erDiagram
     organizations ||--o{ memberships : has
     organizations ||--o{ projects : owns
     projects ||--o{ api_keys : has
+    projects ||--o{ events : receives
+    events ||--o{ event_breakdowns : has
 
     users {
         uuid id PK
@@ -35,5 +37,21 @@ erDiagram
         text key_hash UK
         text prefix
         timestamptz revoked_at
+    }
+    events {
+        uuid id PK
+        uuid project_id FK
+        text external_id
+        text model
+        int input_tokens
+        int output_tokens
+        boolean estimated
+    }
+    event_breakdowns {
+        uuid id PK
+        uuid event_id FK
+        text direction
+        text category
+        int tokens
     }
 ```
