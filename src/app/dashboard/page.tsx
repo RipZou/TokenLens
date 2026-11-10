@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
+import { BudgetNotifier } from "@/components/budget-panel";
 import { LiveCalls } from "@/components/live-calls";
 import { TodaySplit, UsageChart } from "@/components/usage-chart";
 import { requirePageUser } from "@/lib/auth/page-session";
@@ -27,21 +28,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const deps = callDependencies();
   if (deps instanceof Response) throw new Error("Server is not configured");
   const params = await searchParams;
-  const loaded = await loadDashboard(
-    session.sub,
-    {
-      projectId: first(params.project),
-      agent: first(params.agent),
-      model: first(params.model),
-      range: first(params.range),
-    },
-    new Date(),
-    deps,
-  );
+  const [organizations, loaded] = await Promise.all([
+    deps.orgs.listForUser(session.sub),
+    loadDashboard(
+      session.sub,
+      {
+        projectId: first(params.project),
+        agent: first(params.agent),
+        model: first(params.model),
+        range: first(params.range),
+      },
+      new Date(),
+      deps,
+    ),
+  ]);
 
   return (
     <>
       <AppHeader current="/dashboard" email={session.email} />
+      <BudgetNotifier orgs={organizations.map((organization) => ({ id: organization.id, name: organization.name }))} />
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         {loaded.status === 403 ? (

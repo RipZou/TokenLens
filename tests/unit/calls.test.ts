@@ -49,6 +49,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 1,
       cacheWriteTokens: 0,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-09T12:00:00.000Z"),
       breakdowns: rows({ system: 5, user_input: 4 }, { text: 2 }),
     });
@@ -62,6 +63,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       estimated: true,
+      costUsd: null,
       createdAt: new Date("2026-11-10T18:00:00.000Z"),
       breakdowns: rows({ history: 4 }, { tool_use: 1 }),
     });
@@ -99,6 +101,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-10T16:00:00.000Z"),
       breakdowns: rows({ user_input: 9 }, { text: 2 }),
     });
@@ -112,6 +115,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-10T16:05:00.000Z"),
       breakdowns: rows({ user_input: 3 }, { text: 1 }),
     });
@@ -125,6 +129,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-08T12:00:00.000Z"),
       breakdowns: rows({ user_input: 8 }, { text: 1 }),
     });
@@ -155,6 +160,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 0,
       cacheWriteTokens: 0,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-10T12:00:00.000Z"),
       breakdowns: rows({ system: 9 }, { text: 2 }),
     });
@@ -186,6 +192,7 @@ describe("dashboard calls", () => {
       cacheReadTokens: 3,
       cacheWriteTokens: 1,
       estimated: false,
+      costUsd: null,
       createdAt: new Date("2026-11-10T12:00:00.000Z"),
       breakdowns: rows({ system: 5, user_input: 4 }, { text: 2 }),
     });

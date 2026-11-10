@@ -25,6 +25,7 @@ export class PrismaEventRepository implements EventRepository {
           cacheWriteTokens: input.cacheWriteTokens,
           estimated: input.estimated,
           createdAt: input.createdAt,
+          costUsd: input.costUsd,
           breakdowns: { create: input.breakdowns },
         },
         include: { breakdowns: true },
@@ -70,6 +71,7 @@ function toStored(row: {
   cacheWriteTokens: number;
   estimated: boolean;
   createdAt: Date;
+  costUsd: { toFixed(digits: number): string } | null;
   breakdowns: { direction: "input" | "output"; category: string; tokens: number }[];
 }): StoredEvent {
   return {
@@ -84,6 +86,7 @@ function toStored(row: {
     cacheWriteTokens: row.cacheWriteTokens,
     estimated: row.estimated,
     createdAt: row.createdAt,
+    costUsd: row.costUsd === null ? null : row.costUsd.toFixed(8),
     breakdowns: row.breakdowns.map((item) => ({
       direction: item.direction,
       category: item.category,

@@ -44,6 +44,7 @@ function event(projectId: string, agentName: string, createdAt: Date): Omit<Stor
     cacheReadTokens: 0,
     cacheWriteTokens: 0,
     estimated: false,
+    costUsd: null,
     createdAt,
     breakdowns: rows("history", 4),
   };

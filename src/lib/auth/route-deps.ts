@@ -1,8 +1,10 @@
 import type { AuthDependencies } from "@/lib/auth/handlers";
+import { getBudgetRepository } from "@/lib/db/budget-repository";
 import { getEventRepository } from "@/lib/db/event-repository";
 import { getOrganizationRepository } from "@/lib/db/organization-repository";
 import { getProjectRepository } from "@/lib/db/project-repository";
 import { getUserRepository } from "@/lib/db/user-repository";
+import type { BudgetDependencies } from "@/lib/services/budgets";
 import type { CallDependencies } from "@/lib/services/calls";
 import type { StreamDependencies } from "@/lib/services/stream";
 import type { OrganizationDependencies } from "@/lib/services/organizations";
@@ -48,4 +50,10 @@ export function streamDependencies(): StreamDependencies | Response {
     events: getEventRepository(),
     secret: projects.secret,
   };
+}
+
+export function budgetDependencies(): BudgetDependencies | Response {
+  const auth = authDependencies();
+  if (auth instanceof Response) return auth;
+  return { orgs: auth.orgs, projects: getProjectRepository(), budgets: getBudgetRepository(), secret: auth.secret };
 }
