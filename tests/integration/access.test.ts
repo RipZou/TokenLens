@@ -2,7 +2,10 @@ import { createHash } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { handleRegister } from "@/lib/auth/handlers";
 import { readCookie, SESSION_COOKIE } from "@/lib/auth/session";
+import { PrismaEventRepository } from "@/lib/db/event-repository";
+import { handleIngestEvent } from "@/lib/services/events";
 import { handleAddMember, handleGetOrganization } from "@/lib/services/organizations";
+import { MemoryRateLimiter } from "@/lib/services/rate-limit";
 import {
   authenticateApiKey,
   handleCreateApiKey,
@@ -132,5 +135,43 @@ describe("PostgreSQL access rules", () => {
     const result = await authenticateApiKey(bearer(key.key), repos.projects);
 
     expect(result instanceof Response && result.status).toBe(401);
+  });
+
+  it("stores a reported call and rejects a duplicate event id", async () => {
+    const admin = await register("admin@example.com");
+    const projectResponse = await createProject(admin.orgId, admin);
+    const { id: projectId } = (await projectResponse.json()) as { id: string };
+    const key = await createKey(projectId, admin);
+    const deps = { projects: repos.projects, events: new PrismaEventRepository(db), rateLimiter: new MemoryRateLimiter() };
+    const body = {
+      provider: "anthropic",
+      agent: "support-agent",
+      model: "claude-sonnet-4-5",
+      request: {
+        model: "claude-sonnet-4-5",
+        system: "You are a support agent",
+        messages: [{ role: "user", content: "Where is my order" }],
+      },
+      usage: { input_tokens: 9, output_tokens: 2 },
+    };
+    const call = (id: string) =>
+      new Request("http://localhost/api/v1/events", {
+        method: "POST",
+        headers: { authorization: `Bearer ${key.key}`, "content-type": "application/json" },
+        body: JSON.stringify({ ...body, id }),
+      });
+
+    const created = await handleIngestEvent(call("evt-1"), deps);
+    expect(created.status).toBe(201);
+    const row = await db.event.findFirstOrThrow({
+      where: { projectId, externalId: "evt-1" },
+      include: { breakdowns: true },
+    });
+    expect(row.inputTokens).toBe(9);
+    expect(row.breakdowns.find((item) => item.category === "user_input")?.tokens).toBe(4);
+    expect(JSON.stringify(row)).not.toContain("Where is my order");
+
+    const duplicate = await handleIngestEvent(call("evt-1"), deps);
+    expect(duplicate.status).toBe(409);
   });
 });

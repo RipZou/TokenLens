@@ -1,0 +1,8 @@
+# The unit tests sign sessions with a fixed placeholder. It is not a credential.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Placeholder used to sign sessions in unit tests"
+regexTarget = "secret"
+regexes = ['''test-secret-that-is-long-enough-for-hs256''']

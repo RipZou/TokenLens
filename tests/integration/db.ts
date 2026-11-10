@@ -23,6 +23,6 @@ export function repositories() {
 
 export async function resetDatabase(): Promise<void> {
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "api_keys", "projects", "memberships", "organizations", "users" CASCADE',
+    'TRUNCATE TABLE "event_breakdowns", "events", "api_keys", "projects", "memberships", "organizations", "users" CASCADE',
   );
 }
