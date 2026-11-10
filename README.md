@@ -38,6 +38,7 @@ Vercel deploys a preview for each pull request and production on merge to `main`
 - [Architecture](docs/architecture.md)
 - [Database schema](docs/database.md)
 - [Contribution log](docs/contributions.md)
+- [Sprint 1](docs/process/sprint-1.md) · [Sprint 2](docs/process/sprint-2.md) · [Standups](docs/process/standups.md)
 - [Agent instructions](AGENTS.md)
 - [Prototype](docs/mockups/tokenlens-prototype.html)
 - [HW3 comparison](docs/hw3/before-after.md) · [HW3 reflection](docs/hw3/reflection.md)
