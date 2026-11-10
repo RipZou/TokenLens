@@ -17,6 +17,7 @@ export type NewEvent = {
   cacheWriteTokens: number;
   estimated: boolean;
   createdAt: Date;
+  costUsd: string | null;
   breakdowns: BreakdownRow[];
 };
 
@@ -31,4 +32,6 @@ export class DuplicateEventError extends Error {
 
 export interface EventRepository {
   create(input: NewEvent): Promise<StoredEvent>;
+  listInRange(projectIds: string[], since: Date): Promise<StoredEvent[]>;
+  findInProjects(id: string, projectIds: string[]): Promise<StoredEvent | null>;
 }

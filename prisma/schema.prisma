@@ -33,6 +33,7 @@ model Organization {
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   memberships Membership[]
   projects    Project[]
+  budgets     Budget[]
 
   @@map("organizations")
 }
@@ -119,4 +120,50 @@ model EventBreakdown {
 
   @@index([eventId])
   @@map("event_breakdowns")
+}
+
+model ModelPrice {
+  model              String  @id
+  inputPerMtok       Decimal @map("input_per_mtok") @db.Decimal(18, 8)
+  outputPerMtok      Decimal @map("output_per_mtok") @db.Decimal(18, 8)
+  cacheReadPerMtok   Decimal @default(0) @map("cache_read_per_mtok") @db.Decimal(18, 8)
+  cacheWritePerMtok  Decimal @default(0) @map("cache_write_per_mtok") @db.Decimal(18, 8)
+
+  @@map("model_prices")
+}
+
+enum BudgetPeriod {
+  day
+  month
+
+  @@map("budget_period")
+}
+
+model Budget {
+  id        String       @id @default(uuid()) @db.Uuid
+  orgId     String       @map("org_id") @db.Uuid
+  period    BudgetPeriod
+  limitUsd  Decimal      @map("limit_usd") @db.Decimal(18, 8)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  alerts    Alert[]
+
+  @@unique([orgId, period])
+  @@map("budgets")
+}
+
+model Alert {
+  id          String   @id @default(uuid()) @db.Uuid
+  budgetId    String   @map("budget_id") @db.Uuid
+  level       Int
+  periodStart DateTime @map("period_start") @db.Timestamptz(6)
+  spendUsd    Decimal  @map("spend_usd") @db.Decimal(18, 8)
+  limitUsd    Decimal  @map("limit_usd") @db.Decimal(18, 8)
+  triggeredAt DateTime @map("triggered_at") @db.Timestamptz(6)
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, periodStart, level])
+  @@index([triggeredAt])
+  @@map("alerts")
 }

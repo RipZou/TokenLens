@@ -1,3 +1,4 @@
+import { getBudgetRepository } from "@/lib/db/budget-repository";
 import { getEventRepository } from "@/lib/db/event-repository";
 import { getProjectRepository } from "@/lib/db/project-repository";
 import { handleIngestEvent, type IngestDependencies } from "@/lib/services/events";
@@ -9,6 +10,7 @@ export function ingestDependencies(): IngestDependencies {
   return {
     projects: getProjectRepository(),
     events: getEventRepository(),
+    budgets: getBudgetRepository(),
     rateLimiter,
   };
 }

@@ -1,8 +1,12 @@
 import { countWords } from "@/lib/classifier/word-count";
 import { classify } from "@/lib/classifier/classify";
 import { INPUT_CATEGORIES, type CountTokens, type OutputCounts } from "@/lib/classifier/types";
+import { costMicros, formatUsd } from "@/lib/budgets/money";
 import { errorResponse } from "@/lib/http";
 import { ingestEventSchema } from "@/lib/schemas/events";
+import type { BudgetRepository } from "@/lib/services/budget-repository";
+import { priceForEvent, recordBudgetAlerts } from "@/lib/services/budgets";
+import { publishStoredEvent } from "@/lib/services/call-bus";
 import { DuplicateEventError, type EventRepository } from "@/lib/services/event-repository";
 import { authenticateApiKey } from "@/lib/services/projects";
 import type { ProjectRepository } from "@/lib/services/project-repository";
@@ -16,6 +20,7 @@ export type IngestDependencies = {
   projects: ProjectRepository;
   events: EventRepository;
   rateLimiter: RateLimiter;
+  budgets?: BudgetRepository;
   now?: () => Date;
   countTokens?: CountTokens;
 };
@@ -55,8 +60,23 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
     return errorResponse(400, "Invalid request body");
   }
 
+  const price = deps.budgets ? await priceForEvent(input.data.model, deps.budgets) : null;
+  const costUsd = price
+    ? formatUsd(
+        costMicros(
+          {
+            inputTokens: breakdown.usage.input_tokens,
+            outputTokens: breakdown.usage.output_tokens,
+            cacheReadTokens: breakdown.cache.cache_read_tokens,
+            cacheWriteTokens: breakdown.cache.cache_write_tokens,
+          },
+          price,
+        ),
+      )
+    : null;
+
   try {
-    await deps.events.create({
+    const stored = await deps.events.create({
       externalId: input.data.id,
       projectId: auth.projectId,
       agentName: input.data.agent,
@@ -67,6 +87,7 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
       cacheWriteTokens: breakdown.cache.cache_write_tokens,
       estimated: breakdown.estimated,
       createdAt: now,
+      costUsd,
       breakdowns: [
         ...INPUT_CATEGORIES.map((category) => ({
           direction: "input" as const,
@@ -80,9 +101,15 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
         })),
       ],
     });
+    publishStoredEvent(stored);
   } catch (error) {
     if (error instanceof DuplicateEventError) return errorResponse(409, "Event ID already exists");
     throw error;
+  }
+
+  if (deps.budgets) {
+    const project = await deps.projects.findById(auth.projectId);
+    if (project) await recordBudgetAlerts(project.orgId, now, { projects: deps.projects, budgets: deps.budgets });
   }
 
   return Response.json(
