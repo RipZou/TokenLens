@@ -17,6 +17,7 @@ export type NewEvent = {
   cacheWriteTokens: number;
   estimated: boolean;
   createdAt: Date;
+  costUsd: string | null;
   breakdowns: BreakdownRow[];
 };
 
