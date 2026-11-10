@@ -48,7 +48,7 @@ async function setup(): Promise<World> {
   const orgs = new MemoryOrganizationRepository();
   const projects = new MemoryProjectRepository();
   const events = new MemoryEventRepository();
-  const budgets = new MemoryBudgetRepository(events, projects);
+  const budgets = new MemoryBudgetRepository(events);
   const projectDeps: ProjectDependencies = { orgs, projects, secret: SECRET };
   const budgetDeps: BudgetDependencies = { orgs, projects, budgets, secret: SECRET };
   const admin = await users.create({ email: "admin@example.com", passwordHash: "$2b$12$hash" });
@@ -176,7 +176,7 @@ describe("budgets", () => {
     expect(developerPrice.status).toBe(403);
 
     await handlePutBudget(
-      jsonRequest("PUT", `/api/orgs/${world.orgId}/budgets`, { period: "day", limitUsd: "1.25" }, { cookie: world.adminCookie }),
+      jsonRequest("PUT", `/api/orgs/${world.orgId}/budgets`, { period: "day", limitUsd: "2" }, { cookie: world.adminCookie }),
       world.orgId,
       world.budgetDeps,
     );
@@ -189,7 +189,7 @@ describe("budgets", () => {
     expect((await ingest(world, key, "evt-2", firstDay)).status).toBe(201);
     const crossed = await alerts(world, firstDay);
     expect(crossed.map((alert) => alert.level)).toEqual([100, 80]);
-    expect(crossed[0]).toEqual(expect.objectContaining({ period: "day", spendUsd: "2.00000000", limitUsd: "1.25000000" }));
+    expect(crossed[0]).toEqual(expect.objectContaining({ period: "day", spendUsd: "2.00000000", limitUsd: "2.00000000" }));
     expect(world.events.saved().find((event) => event.externalId === "evt-1")?.costUsd).toBe("1.00000000");
 
     expect((await ingest(world, key, "evt-3", firstDay)).status).toBe(201);
@@ -199,7 +199,7 @@ describe("budgets", () => {
     expect((await ingest(world, key, "evt-4", nextDay)).status).toBe(201);
     expect((await ingest(world, key, "evt-5", nextDay)).status).toBe(201);
     const secondPeriod = (await alerts(world, nextDay)).filter((alert) => alert.periodStart === "2026-11-11T00:00:00.000Z");
-    expect(secondPeriod.map((alert) => alert.level).sort()).toEqual([80, 100]);
+    expect(secondPeriod.map((alert) => alert.level).sort((left, right) => left - right)).toEqual([80, 100]);
 
     const quietDay = new Date("2026-11-12T12:00:00.000Z");
     const unpriced = await handleIngestEvent(
