@@ -9,7 +9,7 @@ import { handleIngestEvent, INGEST_RATE_LIMIT, type IngestDependencies } from "@
 import { MemoryEventRepository } from "@/lib/services/memory-event-repository";
 import { MemoryRateLimiter } from "@/lib/services/rate-limit";
 
-const SECRET = "test-secret-that-is-long-enough-for-hs256";
+const SECRET = "tokenlens-unit-test";
 const MAX_BODY_BYTES = 1024 * 1024;
 
 const report = {
