@@ -23,10 +23,10 @@
     ],
     "messages": [{ "role": "user", "content": "Check order" }]
   },
-  "usage": { "input_tokens": 10 },
+  "usage": { "input_tokens": 11 },
   "expected": {
     "system": 0,
-    "tool_definitions": 8,
+    "tool_definitions": 9,
     "history": 0,
     "tool_results": 0,
     "retrieval": 0,

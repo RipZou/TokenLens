@@ -453,7 +453,7 @@ describe("usage boundaries", () => {
   });
 
   it("rejects an unsupported provider", () => {
-    expect(() => classify({}, { input_tokens: 0 }, "openai", wordCount)).toThrow(/Unsupported provider/);
+    expect(() => classify({}, { input_tokens: 0 }, "other", wordCount)).toThrow(/Unsupported provider/);
   });
 
   it("rejects a missing token counter", () => {
