@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { displayUsd } from "@/lib/budgets/money";
 import { formatCallTime, formatTokens } from "@/lib/dashboard/categories";
 import type { CallListItem } from "@/lib/services/calls";
 
@@ -35,7 +36,7 @@ export function CallList({ calls }: { calls: CallListItem[] }) {
               <td className="py-2 pr-3 text-right tabular-nums">{formatTokens(call.inputTokens)}</td>
               <td className="py-2 pr-3 text-right tabular-nums">{formatTokens(call.outputTokens)}</td>
               <td className="py-2 pr-3 font-mono">{call.largestCategory}</td>
-              <td className="py-2 text-right">unavailable</td>
+              <td className="py-2 text-right">{displayUsd(call.costUsd)}</td>
             </tr>
           ))}
         </tbody>

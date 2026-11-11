@@ -219,4 +219,65 @@ describe("dashboard calls", () => {
     expect(detail?.input.find((item) => item.category === "system")).toMatchObject({ tokens: 5, share: 5 / 9 });
     expect(detail?.input.find((item) => item.category === "overhead")).toMatchObject({ tokens: 0, share: 0 });
   });
+
+  it("shows a stored cost and sums the range only when every call has one", async () => {
+    const { admin, project, events, deps } = await setup();
+    const priced = await events.create({
+      externalId: "priced",
+      projectId: project.id,
+      agentName: "support-agent",
+      model: "claude-sonnet-4-5",
+      inputTokens: 9,
+      outputTokens: 2,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      estimated: false,
+      costUsd: "1.50000000",
+      createdAt: new Date("2026-11-10T12:00:00.000Z"),
+      breakdowns: rows({ user_input: 9 }, { text: 2 }),
+    });
+    await events.create({
+      externalId: "also-priced",
+      projectId: project.id,
+      agentName: "support-agent",
+      model: "claude-sonnet-4-5",
+      inputTokens: 4,
+      outputTokens: 1,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      estimated: false,
+      costUsd: "0.25000000",
+      createdAt: new Date("2026-11-10T13:00:00.000Z"),
+      breakdowns: rows({ user_input: 4 }, { text: 1 }),
+    });
+
+    const loaded = await loadDashboard(admin.id, { range: "7d" }, NOW, deps);
+    expect(loaded.status).toBe(200);
+    if (loaded.status !== 200) return;
+    expect(loaded.dashboard.calls.map((call) => call.costUsd)).toEqual(["0.25000000", "1.50000000"]);
+    expect(loaded.dashboard.totals.costUsd).toBe("1.75000000");
+
+    const detail = await loadCallDetail(admin.id, project.id, priced.id, deps);
+    expect(detail?.costUsd).toBe("1.50000000");
+
+    await events.create({
+      externalId: "unpriced",
+      projectId: project.id,
+      agentName: "support-agent",
+      model: "claude-sonnet-4-5",
+      inputTokens: 2,
+      outputTokens: 1,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      estimated: false,
+      costUsd: null,
+      createdAt: new Date("2026-11-10T14:00:00.000Z"),
+      breakdowns: rows({ user_input: 2 }, { text: 1 }),
+    });
+    const mixed = await loadDashboard(admin.id, { range: "7d" }, NOW, deps);
+    expect(mixed.status).toBe(200);
+    if (mixed.status !== 200) return;
+    expect(mixed.dashboard.calls[0]?.costUsd).toBeNull();
+    expect(mixed.dashboard.totals.costUsd).toBeNull();
+  });
 });

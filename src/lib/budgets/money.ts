@@ -17,6 +17,12 @@ export function formatUsd(micros: bigint): string {
   return `${negative ? "-" : ""}${whole}.${fraction}`;
 }
 
+export function displayUsd(value: string | null): string {
+  if (value === null) return "unavailable";
+  const trimmed = value.replace(/(\.\d*?[1-9])0+$/, "$1").replace(/\.0+$/, "");
+  return `$${trimmed}`;
+}
+
 export type TokenPrice = {
   inputPerMtok: bigint;
   outputPerMtok: bigint;

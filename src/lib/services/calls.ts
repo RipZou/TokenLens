@@ -1,3 +1,4 @@
+import { formatUsd, parseUsd } from "@/lib/budgets/money";
 import { INPUT_CATEGORIES, type InputCategory } from "@/lib/classifier/types";
 import type { EventRepository, StoredEvent } from "@/lib/services/event-repository";
 import type { OrganizationRepository } from "@/lib/services/organization-repository";
@@ -31,7 +32,7 @@ export type CallListItem = {
   largestCategory: InputCategory;
   estimated: boolean;
   createdAt: string;
-  costUsd: null;
+  costUsd: string | null;
 };
 
 export type ChartBucket = { label: string; totals: CategoryTotal[] };
@@ -45,7 +46,7 @@ export type DashboardData = {
   model: string | null;
   range: TimeRange;
   calls: CallListItem[];
-  totals: { inputTokens: number; outputTokens: number; calls: number; costUsd: null };
+  totals: { inputTokens: number; outputTokens: number; calls: number; costUsd: string | null };
   buckets: ChartBucket[];
   today: CategoryTotal[];
 };
@@ -105,8 +106,15 @@ export function summarizeCall(event: StoredEvent): CallListItem {
     largestCategory: largestCategory(inputTotals(event)),
     estimated: event.estimated,
     createdAt: event.createdAt.toISOString(),
-    costUsd: null,
+    costUsd: event.costUsd,
   };
+}
+
+function totalCost(costs: Array<string | null>): string | null {
+  if (costs.length === 0) return formatUsd(0n);
+  if (costs.some((cost) => cost === null)) return null;
+  const sum = costs.reduce((total, cost) => total + (parseUsd(cost ?? "") ?? 0n), 0n);
+  return formatUsd(sum);
 }
 
 function outputTokens(event: StoredEvent, category: "text" | "thinking" | "tool_use"): number {
@@ -203,7 +211,7 @@ export async function loadDashboard(
         inputTokens: filtered.reduce((sum, event) => sum + event.inputTokens, 0),
         outputTokens: filtered.reduce((sum, event) => sum + event.outputTokens, 0),
         calls: filtered.length,
-        costUsd: null,
+        costUsd: totalCost(filtered.map((event) => event.costUsd)),
       },
       buckets: buildBuckets(filtered, range, now),
       today: sumCategories(filtered.filter((event) => event.createdAt.getTime() >= todayStart.getTime())),

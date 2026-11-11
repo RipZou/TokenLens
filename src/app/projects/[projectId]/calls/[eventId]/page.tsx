@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { requirePageUser } from "@/lib/auth/page-session";
 import { callDependencies } from "@/lib/auth/route-deps";
+import { displayUsd } from "@/lib/budgets/money";
 import { CATEGORY_COLORS, formatCallTime, formatShare, formatTokens } from "@/lib/dashboard/categories";
 import { optimizationHints } from "@/lib/dashboard/hints";
 import { loadCallDetail } from "@/lib/services/calls";
@@ -58,8 +59,10 @@ export default async function CallDetailPage({ params }: { params: Promise<{ pro
               </article>
               <article className="rounded-lg bg-white p-5 shadow-sm">
                 <h2 className="text-sm text-gray-600">Cost</h2>
-                <p className="mt-2 text-3xl font-bold">unavailable</p>
-                <p className="mt-1 text-sm text-gray-600">No model price is set</p>
+                <p className="mt-2 text-3xl font-bold">{displayUsd(call.costUsd)}</p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {call.costUsd === null ? "No price when this call was reported" : "USD when this call was reported"}
+                </p>
               </article>
             </section>
             <section className="rounded-lg bg-white p-6 shadow-sm">
@@ -100,13 +103,13 @@ export default async function CallDetailPage({ params }: { params: Promise<{ pro
                       <td className="py-2 pr-3 font-semibold">Total</td>
                       <td className="py-2 pr-3 text-right font-semibold tabular-nums">{formatTokens(call.inputTokens)}</td>
                       <td className="py-2 pr-3 text-right font-semibold">100%</td>
-                      <td className="py-2 text-right">unavailable</td>
+                      <td className="py-2 text-right">{displayUsd(call.costUsd)}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="mt-4 text-sm text-gray-700">
-                Categories sum to the reported input tokens. Cost stays unavailable until a model price is set.
+                Categories sum to the reported input tokens. The total uses the price saved when the call was reported. A call reported before that price stays unavailable.
               </p>
             </section>
             <Hints input={call.input} inputTokens={call.inputTokens} />

@@ -5,6 +5,7 @@ import { LiveCalls } from "@/components/live-calls";
 import { TodaySplit, UsageChart } from "@/components/usage-chart";
 import { requirePageUser } from "@/lib/auth/page-session";
 import { callDependencies } from "@/lib/auth/route-deps";
+import { displayUsd } from "@/lib/budgets/money";
 import { RANGE_LABELS, formatTokens } from "@/lib/dashboard/categories";
 import { TIME_RANGES, loadDashboard, type DashboardData, type TimeRange } from "@/lib/services/calls";
 
@@ -120,8 +121,10 @@ function DashboardView({ dashboard }: { dashboard: DashboardData }) {
         </article>
         <article className="rounded-lg bg-white p-5 shadow-sm">
           <h2 className="text-sm text-gray-600">Cost</h2>
-          <p className="mt-2 text-3xl font-bold">unavailable</p>
-          <p className="mt-1 text-sm text-gray-600">No model price is set</p>
+          <p className="mt-2 text-3xl font-bold">{displayUsd(dashboard.totals.costUsd)}</p>
+          <p className="mt-1 text-sm text-gray-600">
+            {dashboard.totals.costUsd === null ? "A call in this range has no price" : "USD for this range"}
+          </p>
         </article>
       </section>
 
