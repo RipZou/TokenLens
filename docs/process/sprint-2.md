@@ -3,7 +3,7 @@
 | Issue | Owner | Result |
 | --- | --- | --- |
 | #6 Ingest API | RipZou | Done |
-| #7 E2E | Eileenyuan1 | Done. The issue is still open because the pull requests did not say `Closes #7`. |
+| #7 E2E | Eileenyuan1 | Done |
 | #8 Live calls | RipZou | Done |
 | #9 Chart and call detail | RipZou | Done |
 | #10 OpenAI requests | RipZou | Done. Failing test commit `3d1c412`, then implementation `572bd38`. |
@@ -12,7 +12,7 @@
 | #13 Security scanning | Eileenyuan1 | Done |
 | #14 Hints and SDK | RipZou | Done. No separate red commit. |
 | #15 Topic tags | RipZou | Done. No separate red commit. |
-| #16 Docs | Eileenyuan1 | Done. The issue is still open because the pull request did not say `Closes #16`. |
+| #16 Docs | Eileenyuan1 | Done |
 
 ## Retrospective
 

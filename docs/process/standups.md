@@ -12,9 +12,9 @@
 | 11/3 | RipZou | Failing auth test, then email/password sign-in with an httpOnly JWT (#2) | Merge sign-in after review | — |
 | 11/4 | Eileenyuan1 | Organizations and roles (#3), projects and reporting keys (#4), each with a failing test first. Added the Vercel migration step | E2E happy path | Vercel previews still being set up |
 | 11/4 | RipZou | Sign-in merged (#22) | Ingest API (#6) | — |
-| 11/5 | Eileenyuan1 | App skeleton and CI (#1) | Organizations and roles (#3), projects and keys (#4) | Vercel previews not set up |
+| 11/5 | Eileenyuan1 | #3 and #4 in review (#23, #24) | Get Vercel previews deploying, then E2E (#7) | Previews fail without a database URL |
 | 11/5 | RipZou | Sign-in (#2) | Vercel and Neon setup, ingest API (#6) | — |
-| 11/9 | Eileenyuan1 | CodeQL, npm audit, and secret scan (#13). Playwright happy path and the preview E2E workflow (#7). Setup, architecture, schema, and the contribution log (#16) | Report-call step in E2E, and the events tables | Neon preview branch limit |
+| 11/9 | Eileenyuan1 | Projects and API keys pages with integration tests (#4). CodeQL, npm audit, and secret scan (#13). Playwright happy path and the preview E2E workflow (#7). Setup, architecture, schema, and the contribution log (#16) | Report-call step in E2E, and the events tables | Previews had no tables until #25 merged |
 | 11/9 | RipZou | Ingest failing test, then the handler (#6). Fixed the secret scan on the unit-test placeholder | Dashboard chart (#9), live calls (#8), budgets (#11) | — |
-| 11/10 | Eileenyuan1 | #3, #4, E2E (#7), security scanning (#13) | Docs (#16), finish E2E | Neon preview branch limit |
-| 11/10 | RipZou | Ingest API (#6) | Dashboard (#9), live calls (#8), budgets (#11) | — |
+| 11/10 | Eileenyuan1 | Report-call and call-list E2E steps (#7), non-UUID call-id fix (#9), sprint records (#16) | Final docs, reflection, demo | Neon preview branch limit |
+| 11/10 | RipZou | Dashboard (#9), live calls (#8), budgets (#11), OpenAI (#10), API docs (#12), hints (#14), topics (#15) | Budgets sign-in fix, Sprint 2 retro | — |

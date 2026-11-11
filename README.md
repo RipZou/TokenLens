@@ -4,7 +4,7 @@ TokenLens helps AI-agent teams understand token usage by source and monitor spen
 
 **Team:** [Eileenyuan1](https://github.com/Eileenyuan1) · [RipZou](https://github.com/RipZou)
 
-**Production:** https://token-lens-chi.vercel.app
+**Production:** https://token-lens-chi.vercel.app · **API docs:** https://token-lens-chi.vercel.app/docs
 
 ## Local setup
 
