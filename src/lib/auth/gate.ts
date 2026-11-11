@@ -1,6 +1,6 @@
 import { readRequestSession } from "@/lib/auth/session";
 
-const PROTECTED_PATHS = ["/dashboard", "/projects"];
+const PROTECTED_PATHS = ["/dashboard", "/projects", "/budgets"];
 
 export async function gateProtectedPages(
   request: Request,
