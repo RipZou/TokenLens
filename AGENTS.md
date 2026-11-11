@@ -2,11 +2,9 @@
 
 TokenLens helps small AI-agent teams track reported model calls, understand which parts of the input context use tokens, and monitor spending.
 
-This file describes two layers. Do not treat planned app work as present in the repo.
-
 ## Current app
 
-Implemented: the Anthropic classifier, sign-in, organizations and roles, projects, reporting keys, and ingestion (`POST /api/v1/events`). Dashboards and budgets are planned.
+Implemented: Anthropic and OpenAI classification, sign-in, organizations and roles, projects and reporting keys, ingestion (`POST /api/v1/events`), the dashboard and call detail with live updates, budgets and alerts, API docs at `/docs`, optimization hints, a reporting wrapper, and optional topic tags.
 
 - **Stack:** Node.js 24.22.2 (`.nvmrc`), Next.js 16 App Router, Tailwind 4, Prisma 7 on Neon PostgreSQL, Zod 4, jose, bcrypt, Vitest, Playwright. `package.json` pins exact versions; do not add or upgrade packages without approval.
 - **Commands:** `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration` (needs `INTEGRATION_DATABASE_URL`), `npm run test:e2e` (needs `E2E_BASE_URL`).
@@ -23,7 +21,9 @@ Implemented: the Anthropic classifier, sign-in, organizations and roles, project
 | `src/lib/services/` | Handlers, repository interfaces, in-memory repositories |
 | `src/lib/db/` | Prisma client and repositories |
 | `src/lib/schemas/` | Zod request schemas |
-| `src/lib/classifier/` | Anthropic parser, allocation, calibration |
+| `src/lib/classifier/` | Anthropic and OpenAI parsers, allocation, calibration |
+| `src/lib/budgets/`, `src/lib/dashboard/`, `src/lib/topics/` | Budget periods and money, dashboard helpers, topic tags |
+| `src/lib/openapi/`, `src/lib/sdk/`, `sdk/` | API document, reporting wrapper and its README |
 | `prisma/` | Schema and migrations |
 | `tests/` | `unit/`, `integration/` (isolated database, never production), `e2e/` |
 | `fixtures/`, `scripts/` | Classifier fixtures and scorer |
@@ -36,28 +36,19 @@ Implemented: the Anthropic classifier, sign-in, organizations and roles, project
 - Import from `src/` with `@/`. Use native `fetch`, named constants, and small typed functions.
 - Store timestamps in UTC.
 - Server Components by default; Client Components only when interaction requires it.
+- Live updates use Server-Sent Events (SSE), one stream per project.
+- Calculate costs with decimal-safe arithmetic; do not round each event to cents.
 
 ### Testing (current)
 
 - Pattern: test-driven development. Commit a failing test (red), make the smallest change that passes (green), then refactor.
 - Mock model APIs. Never change expected fixture results to make an implementation pass. Report test results honestly, including tests you did not run.
 
-## Planned full-stack app
+## Further work
 
-The items below are the target product. Implement them only when the assigned Issue asks for them. Do not create empty scaffolding for unused folders.
+Implement new features only when an Issue asks for them. Add Prettier only with the Issue that introduces it.
 
-- **Planned libraries:** Recharts 3 (charts). Add Prettier only with the Issue that introduces it.
-- Live updates use Server-Sent Events (SSE), one stream per project.
-- Calculate costs with decimal-safe arithmetic; do not round each event to cents.
-
-### Planned directories
-
-| Path | Responsibility |
-| --- | --- |
-| `src/app/api/v1/` | Public query APIs |
-| `fixtures/openai/` | Fixed OpenAI request/usage examples |
-
-### Planned testing
+### Testing targets
 
 - **Unit:** classifier fixtures, calibration, cost arithmetic and budget transitions.
 - **Integration:** role denial, tenant isolation, revoked keys, duplicate event IDs and budget boundaries.
@@ -71,7 +62,7 @@ The items below are the target product. Implement them only when the assigned Is
 - If the PRD, prototype and Issue conflict, ask before implementing.
 - **Visual style:** light-gray background, white cards, blue actions, amber warnings, responsive layout.
 
-## Key UI components and behavior (planned)
+## Key UI components and behavior
 
 - **Sign-in:** labeled email/password fields, registration link, validation, pending and error states, real server authentication.
 - **App shell:** navigation to Dashboard, Call detail, Budgets and API keys; project selector; live status; sign-out.
@@ -101,9 +92,9 @@ The classifier splits one model call's input tokens into source categories. Keep
   - Final counts are nonnegative integers that sum exactly to the target.
 - **`estimated` flag:** true when |local sum − target| / target > 5%. If target > 0 and local sum = 0, put everything in `overhead` and mark estimated. If target = 0, return all zeros and mark estimated when local counts were positive. Reject negative or invalid usage.
 - **5% is relative, not a flat token gap.** Example: ten local words and `input_tokens` of 14. The absolute gap is 4, but |10 − 14| / 14 is about 29%, which is over 5%. Scale the counts so they sum to 14 and set `estimated` to true. Do not store overhead 4 with `estimated` false. The nine shared fixtures do not catch this mistake.
-- **Cost (planned):** read unit prices from `model_prices`, including output and cache pricing. Only Admins may edit prices. Show "unavailable" for unknown prices, never zero.
+- **Cost:** read unit prices from `model_prices`, including output and cache pricing. Only Admins may edit prices. Show "unavailable" for unknown prices, never zero.
 
-## User flows (planned)
+## User flows
 
 1. Register/sign in → create/join an organization → Admin invites members and assigns roles.
 2. Select/create a project → generate/copy a reporting key → report a call → see a live update → open its detail.
@@ -114,7 +105,7 @@ The classifier splits one model call's input tokens into source categories. Keep
 **Do**
 - Keep edits within the assigned Issue.
 - Reuse existing Zod schemas, Prisma repositories and auth helpers when those exist.
-- Prefer the libraries listed for the current repo or the planned app, and native platform features.
+- Prefer the libraries listed in this file and native platform features.
 - Enforce permissions on the server.
 - Implement loading, empty and error states for UI work.
 
@@ -149,7 +140,7 @@ The classifier splits one model call's input tokens into source categories. Keep
 - Keep raw content storage disabled by default. Do not store raw prompts or tool content; keep only counts and metadata. Sample retention requires a separate Issue that defines access, retention, and deletion.
 - Keep secrets out of code, logs, client bundles and `.env.example`.
 
-## Accessibility requirements (planned UI)
+## Accessibility requirements
 
 - Semantic buttons, links and labeled inputs.
 - Full keyboard navigation with visible focus.
