@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("register, create a project, issue a key, and report a call", async ({ page, request }) => {
+test("register, create a project, issue a key, report a call, and open it", async ({ page, request }) => {
   const email = `e2e-${Date.now()}@example.test`;
   let key = "";
 
@@ -52,5 +52,14 @@ test("register, create a project, issue a key, and report a call", async ({ page
     expect(response.status()).toBe(201);
     const body = (await response.json()) as { input: Record<string, number> };
     expect(Object.values(body.input).reduce((sum, tokens) => sum + tokens, 0)).toBe(9);
+  });
+
+  await test.step("see the call in the list and open its detail", async () => {
+    await page.goto("/dashboard");
+    const row = page.getByRole("table", { name: "Recent calls" }).getByRole("row").filter({ hasText: "support-agent" });
+    await expect(row).toHaveCount(1);
+    await row.getByRole("link").click();
+    await expect(page.getByRole("heading", { level: 1, name: /support-agent/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Input breakdown" })).toBeVisible();
   });
 });
