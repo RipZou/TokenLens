@@ -4,23 +4,30 @@ TokenLens helps small AI-agent teams track reported model calls, understand whic
 
 This file describes two layers. Do not treat planned app work as present in the repo.
 
-## Current classifier and tests
+## Current app
 
-The repo currently implements the Anthropic input classifier, its unit tests, and fixtures.
+Implemented: the Anthropic classifier, sign-in, organizations and roles, projects, reporting keys, and ingestion (`POST /api/v1/events`). Dashboards and budgets are planned.
 
-- **Runtime:** Node.js 24.22.2 (`.nvmrc`).
-- **Installed packages:** TypeScript 5.9.3, Vitest 4.1.12, `@types/node` 24.19.2. `package.json` and the lockfile define installed versions. Do not add, upgrade, or replace packages without approval.
-- **Commands available now** (`package.json`): `npm test` (`vitest run`) and `npm run typecheck` (`tsc --noEmit`). Do not invent lint, build, or e2e scripts until they exist.
+- **Stack:** Node.js 24.22.2 (`.nvmrc`), Next.js 16 App Router, Tailwind 4, Prisma 7 on Neon PostgreSQL, Zod 4, jose, bcrypt, Vitest, Playwright. `package.json` pins exact versions; do not add or upgrade packages without approval.
+- **Commands:** `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration` (needs `INTEGRATION_DATABASE_URL`), `npm run test:e2e` (needs `E2E_BASE_URL`).
+- **Layers:** Route Handlers → handlers in `src/lib/services/` or `src/lib/auth/` (Zod, permissions) → repository interfaces → Prisma repositories in `src/lib/db/`. Unit tests use in-memory repositories.
+- **CI:** `ci.yml` (lint, unit, integration, build), `e2e.yml` (Playwright on the Vercel preview), `security.yml` (CodeQL, npm audit, gitleaks).
 
 ### Existing directories
 
 | Path | Responsibility |
 | --- | --- |
-| `src/lib/classifier/` | Pure Anthropic parser, category allocation, and calibration |
-| `tests/unit/` | Vitest classifier tests |
-| `fixtures/anthropic/` | Fixed Anthropic request/usage examples |
-| `scripts/` | Shared Anthropic fixture scorer |
-| `docs/` | PRD, prototype, and homework notes |
+| `src/app/` | Pages and Route Handlers |
+| `src/components/` | Client Components |
+| `src/lib/auth/` | Sessions, passwords, reporting keys, permissions |
+| `src/lib/services/` | Handlers, repository interfaces, in-memory repositories |
+| `src/lib/db/` | Prisma client and repositories |
+| `src/lib/schemas/` | Zod request schemas |
+| `src/lib/classifier/` | Anthropic parser, allocation, calibration |
+| `prisma/` | Schema and migrations |
+| `tests/` | `unit/`, `integration/` (isolated database, never production), `e2e/` |
+| `fixtures/`, `scripts/` | Classifier fixtures and scorer |
+| `docs/` | PRD, architecture, schema, prototype, homework |
 
 ### Naming and coding standards (current)
 
@@ -28,38 +35,26 @@ The repo currently implements the Anthropic input classifier, its unit tests, an
 - Filenames in kebab-case; components and types in PascalCase; functions and variables in camelCase.
 - Import from `src/` with `@/`. Use native `fetch`, named constants, and small typed functions.
 - Store timestamps in UTC.
+- Server Components by default; Client Components only when interaction requires it.
 
 ### Testing (current)
 
-- Vitest for unit tests. Pattern: test-driven development. Commit a failing test (red), make the smallest change that passes (green), then refactor.
+- Pattern: test-driven development. Commit a failing test (red), make the smallest change that passes (green), then refactor.
 - Mock model APIs. Never change expected fixture results to make an implementation pass. Report test results honestly, including tests you did not run.
 
 ## Planned full-stack app
 
 The items below are the target product. Implement them only when the assigned Issue asks for them. Do not create empty scaffolding for unused folders.
 
-- **Target runtime and framework:** Next.js 16.4.3 (App Router), React/React DOM 19.2, Tailwind CSS 4.3.3.
-- **Target data:** PostgreSQL 17 on Neon, Prisma CLI/Client 7.10.1 with the matching Prisma 7 PostgreSQL adapter. SQL tables in plural snake_case, mapped through Prisma.
-- **Target libraries:** Zod 4 (validation), jose 6 (JWT), bcrypt 6 (passwords), Recharts 3 (charts), Playwright 1 (E2E).
-- **Target tooling:** exact versions (no `^`/`~`). Deploy on Vercel; CI on GitHub Actions. Add ESLint/Prettier with the Issue that introduces them, then follow that config.
-- Route Handlers validate input with Zod, then call services. Services call repositories. Database access stays server-side inside `src/lib/db/`.
+- **Planned libraries:** Recharts 3 (charts). Add Prettier only with the Issue that introduces it.
 - Live updates use Server-Sent Events (SSE), one stream per project.
 - Calculate costs with decimal-safe arithmetic; do not round each event to cents.
-- Shared Zod schemas live under `src/lib/schemas/` once that directory exists.
 
 ### Planned directories
 
 | Path | Responsibility |
 | --- | --- |
-| `src/app/` | Pages/layouts; Server Components by default |
-| `src/app/api/v1/` | Route Handlers: parse, authenticate, authorize, call services, return HTTP |
-| `src/components/` | Reusable UI; Client Components only when interaction requires it |
-| `src/lib/services/` | Organizations, projects, ingestion, analytics and budgets |
-| `src/lib/db/` | Prisma setup and organization-scoped repositories |
-| `src/lib/auth/`, `src/lib/schemas/` | Shared permission helpers and Zod schemas |
-| `prisma/` | Prisma schema, migrations and configuration |
-| `tests/integration/` | Isolated test PostgreSQL (never production) |
-| `tests/e2e/` | Playwright E2E tests |
+| `src/app/api/v1/` | Public query APIs |
 | `fixtures/openai/` | Fixed OpenAI request/usage examples |
 
 ### Planned testing
@@ -85,7 +80,7 @@ The items below are the target product. Implement them only when the assigned Is
 - **Budgets:** daily/monthly limits, progress bar, 80% and 100% thresholds, banner, toast and alert history. Send one alert per budget, period and threshold.
 - **API keys:** show the full key once with Copy/dismiss, then only its prefix and metadata. Revoked keys fail ingestion.
 - Every data view has loading, empty and error states; live views also show connection/reconnection status.
-- Registration, organization/invitation and project-creation screens are not designed in the prototype. Ask before inventing their UI.
+- Registration creates a "Personal" organization with the user as Admin; `/projects` creates projects. Organization and invitation screens are not designed in the prototype. Ask before inventing their UI.
 
 ## Token classifier
 
@@ -134,7 +129,7 @@ The classifier splits one model call's input tokens into source categories. Keep
 
 ## Security requirements
 
-- **Roles (enforced on the server when auth exists):**
+- **Roles (enforced on the server):**
 
 | Action | Admin | Developer | Viewer |
 | --- | --- | --- | --- |
