@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db/prisma";
+import { isUuid } from "@/lib/db/uuid";
 import {
   DuplicateEventError,
   type EventRepository,
@@ -51,7 +52,7 @@ export class PrismaEventRepository implements EventRepository {
   }
 
   async findInProjects(id: string, projectIds: string[]): Promise<StoredEvent | null> {
-    if (projectIds.length === 0) return null;
+    if (projectIds.length === 0 || !isUuid(id)) return null;
     const row = await this.db.event.findFirst({
       where: { id, projectId: { in: projectIds } },
       include: { breakdowns: true, topics: true },

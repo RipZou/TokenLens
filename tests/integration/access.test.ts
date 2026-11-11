@@ -217,6 +217,15 @@ describe("PostgreSQL access rules", () => {
     expect(hidden).toBeNull();
   });
 
+  it("returns no call for an id that is not a UUID", async () => {
+    const admin = await register("admin@example.com");
+    const projectResponse = await createProject(admin.orgId, admin);
+    const { id: projectId } = (await projectResponse.json()) as { id: string };
+    const callDeps = { orgs: repos.orgs, projects: repos.projects, events: new PrismaEventRepository(db) };
+
+    expect(await loadCallDetail(admin.id, projectId, "not-a-uuid", callDeps)).toBeNull();
+  });
+
   it("stores one alert per threshold when priced spend reaches the daily budget", async () => {
     const admin = await register("admin@example.com");
     const developer = await register("dev@example.com");

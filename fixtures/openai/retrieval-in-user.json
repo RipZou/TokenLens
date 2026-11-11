@@ -1,0 +1,27 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          { "type": "text", "text": "Policy excerpt", "tl_category": "retrieval" },
+          { "type": "text", "text": "What is the policy" }
+        ]
+      }
+    ]
+  },
+  "usage": { "input_tokens": 6 },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 2,
+    "user_input": 4,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}
