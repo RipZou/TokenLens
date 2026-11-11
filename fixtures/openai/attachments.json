@@ -1,0 +1,27 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          { "type": "text", "text": "See photo" },
+          { "type": "image_url", "image_url": { "url": "https://example.com/a.png" } }
+        ]
+      }
+    ]
+  },
+  "usage": { "input_tokens": 3 },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 2,
+    "attachments": 1,
+    "overhead": 0,
+    "estimated": false
+  }
+}
