@@ -1,7 +1,5 @@
 # Standups
 
-Sprint 1 is 10/28–11/4. Sprint 2 is 11/5–11/10. Each partner has at least three rows in each sprint. The rows for 10/28, 10/29, 11/2, 11/3, 11/4, and 11/9 are taken from commits already on `main`.
-
 | Date | Partner | Done | Next | Blockers |
 | --- | --- | --- | --- | --- |
 | 10/28 | Eileenyuan1 | Added AGENTS.md (#1) | Align the PRD with the classifier rules | — |
