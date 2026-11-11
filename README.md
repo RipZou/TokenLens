@@ -42,6 +42,7 @@ Vercel deploys a preview for each pull request and production on merge to `main`
 - [Agent instructions](AGENTS.md)
 - [Prototype](docs/mockups/tokenlens-prototype.html)
 - [HW3 comparison](docs/hw3/before-after.md) · [HW3 reflection](docs/hw3/reflection.md)
+- [P2 reflections](docs/reflections/): [Peixin](docs/reflections/peixin.md)
 
 ## Planning
 
