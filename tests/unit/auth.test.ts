@@ -85,6 +85,15 @@ describe("email and password authentication", () => {
     expect(response?.headers.get("location")).toBe("http://localhost/sign-in");
   });
 
+  it("redirects an unauthenticated budgets visit to the sign-in page", async () => {
+    const response = await gateProtectedPages(new Request("http://localhost/budgets"), {
+      secret: SECRET,
+    });
+
+    expect(response?.status).toBe(307);
+    expect(response?.headers.get("location")).toBe("http://localhost/sign-in");
+  });
+
   it("redirects a dashboard visit with an invalid session cookie", async () => {
     const response = await gateProtectedPages(
       new Request("http://localhost/dashboard", {
