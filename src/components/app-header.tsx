@@ -5,6 +5,7 @@ const LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/budgets", label: "Budgets" },
   { href: "/projects", label: "Projects" },
+  { href: "/docs", label: "Docs" },
 ];
 
 export function AppHeader({ current, email }: { current: string; email: string }) {
