@@ -1,0 +1,22 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      { "role": "system", "content": "Be brief" },
+      { "role": "user", "content": "Check order A100" }
+    ]
+  },
+  "usage": { "input_tokens": 5 },
+  "expected": {
+    "system": 2,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 3,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

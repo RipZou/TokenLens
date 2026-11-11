@@ -1,0 +1,22 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      { "role": "developer", "content": "Follow policy" },
+      { "role": "user", "content": "Hello" }
+    ]
+  },
+  "usage": { "input_tokens": 3 },
+  "expected": {
+    "system": 2,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 1,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}
