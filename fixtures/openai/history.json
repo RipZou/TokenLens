@@ -1,0 +1,23 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      { "role": "user", "content": "Earlier question" },
+      { "role": "assistant", "content": "Earlier answer" },
+      { "role": "user", "content": "Follow up" }
+    ]
+  },
+  "usage": { "input_tokens": 6 },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 4,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 2,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}

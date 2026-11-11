@@ -4,7 +4,7 @@ const tokenCount = z.number().int().nonnegative();
 
 export const ingestEventSchema = z.object({
   id: z.string().trim().min(1).max(200),
-  provider: z.literal("anthropic"),
+  provider: z.enum(["anthropic", "openai"]),
   agent: z.string().trim().min(1).max(200),
   model: z.string().trim().min(1).max(200),
   request: z.unknown().refine((value) => typeof value === "object" && value !== null && !Array.isArray(value)),

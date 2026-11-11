@@ -1,0 +1,19 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [{ "role": "user", "content": "Hello there" }]
+  },
+  "usage": { "input_tokens": 4 },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 0,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 4,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": true
+  }
+}
