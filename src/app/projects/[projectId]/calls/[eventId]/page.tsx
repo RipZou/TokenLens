@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { requirePageUser } from "@/lib/auth/page-session";
 import { callDependencies } from "@/lib/auth/route-deps";
 import { CATEGORY_COLORS, formatCallTime, formatShare, formatTokens } from "@/lib/dashboard/categories";
+import { optimizationHints } from "@/lib/dashboard/hints";
 import { loadCallDetail } from "@/lib/services/calls";
 
 export default async function CallDetailPage({ params }: { params: Promise<{ projectId: string; eventId: string }> }) {
@@ -108,9 +109,25 @@ export default async function CallDetailPage({ params }: { params: Promise<{ pro
                 Categories sum to the reported input tokens. Cost stays unavailable until a model price is set.
               </p>
             </section>
+            <Hints input={call.input} inputTokens={call.inputTokens} />
           </>
         )}
       </main>
     </>
+  );
+}
+
+function Hints({ input, inputTokens }: { input: { category: string; tokens: number }[]; inputTokens: number }) {
+  const hints = optimizationHints(input, inputTokens);
+  if (hints.length === 0) return null;
+  return (
+    <section className="rounded-lg border border-amber-300 bg-amber-50 p-6" aria-label="Optimization hints">
+      <h2 className="text-lg font-semibold text-amber-950">Optimization hints</h2>
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-amber-950">
+        {hints.map((hint) => (
+          <li key={hint}>{hint}</li>
+        ))}
+      </ul>
+    </section>
   );
 }
