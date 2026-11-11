@@ -1,0 +1,38 @@
+{
+  "provider": "openai",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_order",
+          "description": "Look up an order",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "The order id"
+              }
+            },
+            "required": ["order_id"]
+          }
+        }
+      }
+    ],
+    "messages": [{ "role": "user", "content": "Check order" }]
+  },
+  "usage": { "input_tokens": 10 },
+  "expected": {
+    "system": 0,
+    "tool_definitions": 8,
+    "history": 0,
+    "tool_results": 0,
+    "retrieval": 0,
+    "user_input": 2,
+    "attachments": 0,
+    "overhead": 0,
+    "estimated": false
+  }
+}
