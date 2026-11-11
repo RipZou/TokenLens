@@ -58,6 +58,7 @@ export type CallDetail = CallListItem & {
   cacheWriteTokens: number;
   input: { category: InputCategory; tokens: number; share: number }[];
   output: { text: number; thinking: number; tool_use: number };
+  topics: { topic: string; tokens: number }[];
 };
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -235,5 +236,6 @@ export async function loadCallDetail(
       thinking: outputTokens(event, "thinking"),
       tool_use: outputTokens(event, "tool_use"),
     },
+    topics: event.topics ?? [],
   };
 }

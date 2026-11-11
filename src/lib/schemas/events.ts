@@ -16,6 +16,7 @@ export const ingestEventSchema = z.object({
     cache_read_input_tokens: tokenCount.optional(),
     cache_creation_input_tokens: tokenCount.optional(),
   }),
+  tagTopics: z.boolean().optional(),
 });
 
 export type IngestEventInput = z.infer<typeof ingestEventSchema>;

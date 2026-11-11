@@ -27,8 +27,9 @@ export class PrismaEventRepository implements EventRepository {
           createdAt: input.createdAt,
           costUsd: input.costUsd,
           breakdowns: { create: input.breakdowns },
+          topics: { create: input.topics ?? [] },
         },
-        include: { breakdowns: true },
+        include: { breakdowns: true, topics: true },
       });
       return toStored(row);
     } catch (error) {
@@ -43,7 +44,7 @@ export class PrismaEventRepository implements EventRepository {
     if (projectIds.length === 0) return [];
     const rows = await this.db.event.findMany({
       where: { projectId: { in: projectIds }, createdAt: { gte: since } },
-      include: { breakdowns: true },
+      include: { breakdowns: true, topics: true },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     });
     return rows.map(toStored);
@@ -53,7 +54,7 @@ export class PrismaEventRepository implements EventRepository {
     if (projectIds.length === 0) return null;
     const row = await this.db.event.findFirst({
       where: { id, projectId: { in: projectIds } },
-      include: { breakdowns: true },
+      include: { breakdowns: true, topics: true },
     });
     return row ? toStored(row) : null;
   }
@@ -72,6 +73,7 @@ function toStored(row: {
   estimated: boolean;
   createdAt: Date;
   costUsd: { toFixed(digits: number): string } | null;
+  topics: { topic: string; tokens: number }[];
   breakdowns: { direction: "input" | "output"; category: string; tokens: number }[];
 }): StoredEvent {
   return {
@@ -87,6 +89,7 @@ function toStored(row: {
     estimated: row.estimated,
     createdAt: row.createdAt,
     costUsd: row.costUsd === null ? null : row.costUsd.toFixed(8),
+    topics: row.topics.map((topic) => ({ topic: topic.topic, tokens: topic.tokens })),
     breakdowns: row.breakdowns.map((item) => ({
       direction: item.direction,
       category: item.category,

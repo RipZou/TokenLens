@@ -18,6 +18,7 @@ export type NewEvent = {
   estimated: boolean;
   createdAt: Date;
   costUsd: string | null;
+  topics?: { topic: string; tokens: number }[];
   breakdowns: BreakdownRow[];
 };
 

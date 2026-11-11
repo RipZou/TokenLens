@@ -1,5 +1,6 @@
 import { countWords } from "@/lib/classifier/word-count";
 import { classify } from "@/lib/classifier/classify";
+import { tagRequest } from "@/lib/topics/tag";
 import { INPUT_CATEGORIES, type CountTokens, type OutputCounts } from "@/lib/classifier/types";
 import { costMicros, formatUsd } from "@/lib/budgets/money";
 import { errorResponse } from "@/lib/http";
@@ -23,6 +24,7 @@ export type IngestDependencies = {
   budgets?: BudgetRepository;
   now?: () => Date;
   countTokens?: CountTokens;
+  topicFor?: (text: string) => string;
 };
 
 export async function handleIngestEvent(request: Request, deps: IngestDependencies): Promise<Response> {
@@ -60,6 +62,15 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
     return errorResponse(400, "Invalid request body");
   }
 
+  let topics: { topic: string; tokens: number }[] = [];
+  if (input.data.tagTopics) {
+    try {
+      topics = tagRequest(input.data.request, deps.countTokens ?? countWords, deps.topicFor);
+    } catch {
+      topics = [];
+    }
+  }
+
   const price = deps.budgets ? await priceForEvent(input.data.model, deps.budgets) : null;
   const costUsd = price
     ? formatUsd(
@@ -88,6 +99,7 @@ export async function handleIngestEvent(request: Request, deps: IngestDependenci
       estimated: breakdown.estimated,
       createdAt: now,
       costUsd,
+      topics,
       breakdowns: [
         ...INPUT_CATEGORIES.map((category) => ({
           direction: "input" as const,
