@@ -14,7 +14,12 @@ export class MemoryEventRepository implements EventRepository {
       (event) => event.projectId === input.projectId && event.externalId === input.externalId,
     );
     if (duplicate) throw new DuplicateEventError();
-    const stored = { id: randomUUID(), ...input, breakdowns: input.breakdowns.map((row) => ({ ...row })) };
+    const stored = {
+      id: randomUUID(),
+      ...input,
+      topics: input.topics ?? [],
+      breakdowns: input.breakdowns.map((row) => ({ ...row })),
+    };
     this.events.push(stored);
     return clone(stored);
   }
@@ -39,5 +44,9 @@ export class MemoryEventRepository implements EventRepository {
 }
 
 function clone(event: StoredEvent): StoredEvent {
-  return { ...event, breakdowns: event.breakdowns.map((row) => ({ ...row })) };
+  return {
+    ...event,
+    topics: (event.topics ?? []).map((topic) => ({ ...topic })),
+    breakdowns: event.breakdowns.map((row) => ({ ...row })),
+  };
 }

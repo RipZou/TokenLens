@@ -110,6 +110,7 @@ export default async function CallDetailPage({ params }: { params: Promise<{ pro
               </p>
             </section>
             <Hints input={call.input} inputTokens={call.inputTokens} />
+            <Topics topics={call.topics} />
           </>
         )}
       </main>
@@ -128,6 +129,32 @@ function Hints({ input, inputTokens }: { input: { category: string; tokens: numb
           <li key={hint}>{hint}</li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+function Topics({ topics }: { topics: { topic: string; tokens: number }[] }) {
+  if (topics.length === 0) return null;
+  return (
+    <section className="rounded-lg bg-white p-6 shadow-sm" aria-label="Topic tags">
+      <h2 className="text-lg font-semibold">Topics</h2>
+      <p className="mt-1 text-sm text-gray-600">These labels are separate from the structural categories above.</p>
+      <table className="mt-3 w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-200 text-left">
+            <th className="py-2 pr-3 font-semibold">Topic</th>
+            <th className="py-2 text-right font-semibold">Tokens</th>
+          </tr>
+        </thead>
+        <tbody>
+          {topics.map((topic) => (
+            <tr key={topic.topic} className="border-b border-gray-100">
+              <td className="py-2 pr-3">{topic.topic}</td>
+              <td className="py-2 text-right tabular-nums">{topic.tokens}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }
